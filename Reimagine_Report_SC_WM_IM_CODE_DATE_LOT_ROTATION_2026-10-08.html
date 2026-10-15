@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<!-- ============================================================
+     REIMAGINE REPORT - BLANK UI TEMPLATE v4.7
+     v4.7 FIX: Business Context card now renders current_process_overview.business_context
+          (v4.6 ignored it and printed a hard-coded sentence). Fallback text kept when empty.
+     v4.6 UI CHANGES (swimlane connector routing - DATA CONTRACT unchanged):
+       - Replaces the fixed-corridor router with a collision-aware orthogonal
+         router. Each connector is selected from straight, L, Z (column gutter),
+         Z (lane channel) and 5-leg detour candidates and scored against padded
+         task boxes, gateways, events, gateway/event captions, placed connector
+         labels and every previously routed segment.
+       - A connector never re-uses an occupied segment, never passes through a
+         node and never doubles back on itself; when a gutter or channel is full
+         the router moves to the next free gutter or channel instead of
+         compressing lines together.
+       - Port slots fan multiple connectors that share a box side.
+       - Connector labels are placed on a free stretch of their own route and
+         become obstacles for later connectors.
+       - Flow-order column normalization: every non-loop connection is forced to
+         move strictly left-to-right. Only loop / rework edges (DFS back-edges)
+         may run backward. Columns copied from an image's visual x-position that
+         would create backward or same-column hops are pushed right.
+       - Normalization works on a copy of the elements; REPORT_JSON is not
+         modified. Routes are cached per diagram geometry so the As-Is, To-Be and
+         compare views draw identical connector paths.
+       - No HTML structure, CSS, tabs, columns, legends, filters, aliases, JSON
+         keys or CSV layout changed.
+     v4.5 UI CHANGES (rationale validation):  
+       - Detects rationale text reused across different task/solution pairs.  
+       - Repeated or known generic rationale is not presented as valid task-specific evidence.  
+       - Solutions Discovery, CSV export, and enabler details show a task-specific validation message instructing regeneration of REPORT_JSON.  
+       - Valid task-specific rationale remains unchanged.  
+     v4.4 UI CHANGES (counter logic only - report layout unchanged):
+       - Solutions Discovery counts every Whitespace task separately, even when
+         multiple tasks use the same Whitespace or Custom build placeholder name.
+       - Non-Whitespace category counters continue to de-duplicate repeated solution
+         names case-insensitively within each category.
+       - No HTML structure, CSS, tabs, columns, legends, filters, aliases, or CSV layout changed.
+     v4.3 UI CHANGES (governed template enhancement):
+       - Process KPIs displays literal source-provided KPI or outcome names in one KPI column.
+       - Benchmark and Source columns are removed from the enabler-detail and Overall Summary KPI tables.
+       - KPI badges display KPI names only; benchmark and source suffixes are suppressed.
+       - mapping.kpis uses [{name}]. Older benchmark and source properties are ignored when present.
+       - The empty state reads "No source-provided KPIs are available for this enabler."
+     v4.2 UI CHANGES (governed template enhancement - DATA CONTRACT unchanged):
+       - Baseline: supersedes the supplied v4.0 file and consolidates the Proposed Solutions
+         Whitespace suppression already required by Generation Rules v1.8-v1.9 (v4.1 behaviour).
+       - Proposed Solutions adds a category filter (chip group) inside the solutions panel with
+         exactly these options: All, CGS Solution, Accenture Gen AI, BPA Bots, SAP Business AI.
+       - Default category is All. JSON category values are unchanged; "CGS Scenarios" is only
+         displayed as "CGS Solution".
+       - Combined filtering: a card is visible only when it matches BOTH the current tree scope
+         (hierarchy level = all tasks, or the selected task) AND the selected category.
+       - Selecting a category never changes the selected task, the hierarchy expansion state or
+         the tree selection. Selecting a task or the final hierarchy level never changes the
+         selected category.
+       - Clicking the final hierarchy level clears the task scope only (category is kept).
+       - New "Show all solutions" button clears both the task scope and the category (back to All).
+       - Visible total and every category count are computed from the same de-duplicated set
+         (key = category | name | type | product) inside the current tree scope, so
+         All count = sum of category counts = visible total when All is selected, and
+         visible total = that category's count when a category is selected.
+       - Custom build / Whitespace cards are not rendered in Proposed Solutions; Whitespace-only
+         tasks remain selectable, show a count of 0 and a neutral no-qualified-solutions message.
+       - Non-demo Accenture Gen AI mappings remain excluded (visibleMappings demo gate).
+       - Accessibility: chip group has role="group" and an aria-label; chips are native buttons
+         with aria-pressed; the total is an aria-live="polite" region; the empty state uses
+         role="status"; task rows are keyboard-focusable (Enter/Space) with aria-pressed; level
+         toggles expose aria-expanded; visible focus outlines are provided.
+       - No new top-level JSON key: every mapping already carries its category.
+     v4.0 UI CHANGES:
+       - Reimagined Process Flow adds a Proposed Solutions section immediately above Reimagined Business Process Elements.
+       - The section contains a clickable, expandable hierarchy side panel derived from meta.bph_path.
+       - Clicking the final hierarchy level expands or collapses the task split and simultaneously restores all proposed solutions.
+       - Clicking an individual task shows only the proposed solutions mapped to that task.
+       - The solutions area shows solution cards only; task names and roles are not repeated in the card grid.
+       - Proposed solutions are de-duplicated in the all-solutions view.
+       - A task with no qualified solution displays Custom build with category Whitespace. (Superseded in v4.2: no Whitespace cards in Proposed Solutions.)
+       - The section heading is Proposed Solutions; there is no Summation button or Summation label.
+       - Clickable and selected hierarchy rows use a pointer cursor and visual selection state.
+     v3.9 UI CHANGES:
+       - Current Process Overview adds a concise Business Context card above the SAP Business Process Hierarchy Path.
+       - The repeated text-only hierarchy path below the hierarchy nodes is removed.
+       - Solutions Discovery removes the separate Type column.
+       - Mapping Type is displayed as a smaller dark-purple sub-badge beneath Category, except for Whitespace.
+       - The Solutions Discovery Name column is renamed Solution.
+     v3.8 UI CHANGES:
+       - Clicking an enabler in the Reimagined Process Flow step modal opens a dedicated detail modal.
+       - Enabler detail modal includes Product, Persona, and Process KPIs tabs.
+       - Product tab displays mapping details, challenge, value potential, benefits, and an Open Source link when available.
+       - Persona tab displays the process role, role initials, and enabler-supported responsibilities.
+       - Process KPIs tab displays literal source-provided mapping.kpis entries; qualitative process-impact ratings are not repeated as KPIs.
+       - If no source-provided KPI exists, the Process KPIs tab displays a clear source-KPI empty-state message.
+       - Source action label standardized to Open Source.
+       - Overall Summary value-potential descriptions must be unique and dimension-specific.
+     v3.7 UI CHANGES:
+       - Current Situation displays the generated pain point for every task.
+       - Only a pain point for a task with no qualified solution mapping is badged as Whitespace.
+       - Current Situation CSV exports pain points for every task.
+     v3.6 UI CHANGES:
+       - Current Situation: removed Gateway Next Step; widened Pain Points.
+       - Tab 2 renamed Solutions Discovery across Process Flow.
+       - Category label CGS Scenarios is displayed as CGS Solution.
+       - Tab 2 Gateway Next Step column removed.
+       - Accenture Gen AI display is limited to mappings marked Demo.
+       - Reimagined legend shows all categories and process symbols.
+       - Reimagined task boxes use category-colored borders and synchronized labels.
+     (BPH path header + zoomable swimlanes + clickable step modal)
+     v3.5 CHANGE (UI only - the DATA CONTRACT is unchanged):
+       - Tab 3 step pop-up: the "Agents" section is now titled
+         "Enablers" (same content, same JSON keys).
+     v3.4 CHANGES (UI only - the DATA CONTRACT is unchanged):
+       - Tab 1: "Process Diagram" card replaced by the SAP Business
+         Process Hierarchy path (last node highlighted in purple).
+       - Tab 1: "Key Pain Points" card removed (step-level pain
+         points remain in the Current Situation table).
+       - Tab 1: "System" column removed from Current Situation (As-Is).
+       - Tabs 1 & 3: gateway captions now wrap and show the FULL name
+         (with tooltip) instead of being cut at 26 characters.
+       - Tab 2: repeated Name values are counted once in the category
+         counters; "Product / System" and "Source Reference" columns
+         removed.
+       - Tab 3: "AI Enablement" column removed from the Reimagined
+         Business Process Elements table.
+     The agent still emits the SAME JSON keys (system, pain_points,
+     product, source_ref, ai_label); they are simply not rendered as
+     separate columns, and are still used by search, tooltips, the
+     step modal and the CSV exports where noted.
+     RULES FOR THE AGENT:
+     1. Copy this file BYTE-FOR-BYTE.
+     2. Replace ONLY the REPORT_JSON token (window.__REIMAGINE_DATA__) with the
+        generated JSON object (valid JSON, double quotes, not a
+        string, no code fences).
+     3. Replace the PROCESS_TITLE token with meta.process_name.
+     4. NEVER edit CSS, HTML, class names or JavaScript.
+     The swimlane diagrams are DRAWN BY THIS TEMPLATE from the
+     logical model (lanes + elements + connections). The agent must
+     NEVER output pixel coordinates, SVG or waypoints.
+
+     ------------------- DATA CONTRACT -------------------
+     The REPORT_JSON token must be replaced by a single JSON
+     object with exactly these five top-level keys:
+
+     meta {
+       process_id, process_name, l1, l2, l3, industry, function,
+       generated_on,                 // YYYY-MM-DD
+       input_mode,                   // "image" | "bph"
+       bph_path,                     // "L1 > L2 > L3 > L4 > L5"
+       source_file_name,
+       source_diagram_image          // data: URI of the uploaded
+                                     // image, or null in bph mode
+     }
+
+     current_process_overview {
+       process_summary: [str],       // 4-6 narrative sentences
+       pain_points:     [str],       // exactly one per task, task order (Rules s2)
+       steps: [{
+         step_no, business_process_step, role, system, description,
+         pain_points: [str],
+         gateway_next_step: [{condition, next_step}]
+       }],
+       diagram {
+         pool_name,
+         lanes:    [{lane_id, lane_name}],
+         elements: [{id, kind, label, lane_id, column, gateway_type}],
+         connections: [{from, to, label}]
+       }
+     }
+     // kind = "task" | "gateway" | "event-start" | "event-end"
+     // gateway_type = "exclusive" | "parallel" | "inclusive"
+     // column = 0-based left-to-right position in FLOW order: for every
+     //          non-loop connection, target column > source column
+     //          (v4.6 also normalizes this at render time)
+
+     agentic_discovery {
+       executive_summary: [str],
+       business_process_table: [{
+         step_no, business_process_step, role, gateway_next_step,
+         mappings: [{
+           category,      // CGS Scenarios | Accenture Gen AI |
+                          // BPA Bots | SAP Business AI | Whitespace
+           name, type, rationale, product, source_ref, link,
+           challenge, value,
+           benefits: [str],
+           kpis: [{name}] // literal source-provided KPI or outcome entries only; use [] when none
+         }]
+       }]
+     }
+
+     reimagine_process_flow {
+       business_process_table: [ ...same as above, plus per step:
+         to_be,                      // one sentence, AI-enabled
+         process_impact { cost, cycle_time, experience,
+                          productivity, risk }
+                          // each {qualitative_rating, description}
+       ],
+       diagram { ...same shape as the as-is diagram, identical ids,
+                 plus on each element: role, ai_category, ai_label }
+     }
+
+     overall_summary {
+       headline,
+       category_split { "CGS Scenarios", "Accenture Gen AI",
+                        "BPA Bots", "SAP Business AI",
+                        "Whitespace" },   // percentages, sum = 100
+       value_potential:  [{value_dimension, qualitative_rating,
+                           description}], // descriptions must be unique and dimension-specific
+       kpis_benchmarks:  [{kpi}], // retained property name; UI displays KPI names only
+       personas_impacted:        [str],
+       whitespace_opportunities: [str],
+       recommendations:          [str]
+     }
+     -----------------------------------------------------
+     ============================================================ -->
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Reimagine Process Flow — Manage code date / lot code tracking and rotation</title>
+<style>
+*,*:before,*:after{box-sizing:border-box}
+body{margin:0;background:#f7f7f9;color:#1c1c1c;font-family:Inter,Segoe UI,Roboto,-apple-system,sans-serif;font-size:13px}
+a{color:inherit;text-decoration:none}
+.rpf-shell{max-width:1680px;margin:0 auto;padding:0 20px 60px}
+.rpf-hdr{background:linear-gradient(120deg,#a100ff 0%,#7500c0 55%,#460073 100%);color:#fff;padding:22px 26px;border-radius:0 0 14px 14px;margin:0 -20px 16px}
+.rpf-hdr__eyebrow{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.85;font-weight:600}
+.rpf-hdr__title{font-size:23px;font-weight:700;margin:6px 0 4px}
+.rpf-hdr__meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.rpf-hdr__pill{background:#ffffff26;border:1px solid #ffffff40;border-radius:20px;padding:3px 11px;font-size:11px;font-weight:500}
+.rpf-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:2px solid #ececf1;margin-bottom:14px}
+.rpf-tab{background:none;border:none;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:600;color:#6b6b76;padding:10px 16px;border-bottom:3px solid transparent;margin-bottom:-2px}
+.rpf-tab:hover{color:#a100ff}
+.rpf-tab--active{color:#a100ff;border-bottom-color:#a100ff}
+.rpf-panel{display:none}.rpf-panel--active{display:block}
+.rpf-card{background:#fff;border:1px solid #ececf1;border-radius:10px;padding:16px 18px;margin-bottom:12px}
+.rpf-card-title{font-size:13px;font-weight:700;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.rpf-card-title:before{content:"";width:3px;height:14px;background:#a100ff;border-radius:2px;display:inline-block}
+.rpf-sub{font-size:11px;color:#77777f;margin:-6px 0 10px}
+.rpf-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px}
+.rpf-kpi{background:#fff;border:1px solid #ececf1;border-left:4px solid #a100ff;border-radius:10px;padding:13px 15px}
+.rpf-kpi__val{font-size:25px;font-weight:800;color:#a100ff;line-height:1}
+.rpf-kpi__lbl{font-size:11px;font-weight:600;color:#3c3c45;margin-top:5px}
+.rpf-kpi__sub{font-size:10px;color:#8b8b95;margin-top:2px}
+.rpf-legend{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px}
+.rpf-fchip{border:1px solid #dcdce4;background:#fff;border-radius:20px;padding:5px 13px;font-size:11px;font-weight:600;color:#55555f;cursor:pointer;font-family:inherit}
+.rpf-fchip--on{background:#a100ff;border-color:#a100ff;color:#fff}
+.cat{display:inline-block;border-radius:8px;padding:3px 9px;font-size:10px;font-weight:700;white-space:nowrap;font-family:IBM Plex Mono,Consolas,monospace}
+.cat--cgs{background:#f3e6ff;border:1px solid #dda0ff;color:#7500c0}
+.cat--gen{background:#e8f1ff;border:1px solid #bfdbfe;color:#1d4ed8}
+.cat--bpa{background:#e9fbf3;border:1px solid #a7e8cd;color:#0d7a53}
+.cat--sap{background:#fff4e8;border:1px solid #fed7aa;color:#c2410c}
+.cat--ws{background:#fdf6e3;border:1px solid #f0d58a;color:#8a6100}
+.badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:600;background:#f2f2f6;border:1px solid #e2e2ea;color:#55555f;white-space:nowrap}
+.chip{display:inline-block;background:#f3e6ff;border:1px solid #dda0ff;border-radius:16px;color:#7500c0;font-size:10.5px;font-weight:600;padding:3px 10px;max-width:230px;line-height:1.45;word-break:break-word}
+.chip--ws{background:#fdf6e3;border-color:#f0d58a;color:#8a6100}
+.rpf-tools{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.rpf-input{flex:1;min-width:200px;border:1px solid #dcdce4;border-radius:8px;padding:8px 12px;font-size:12px;font-family:inherit;outline:none}
+.rpf-input:focus{border-color:#a100ff}
+.rpf-btn{background:#a100ff;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.rpf-btn:hover{background:#7500c0}
+.rpf-btn--gh{background:#fff;color:#a100ff;border:1px solid #dda0ff}
+.rpf-tblwrap{overflow-x:auto;border:1px solid #ececf1;border-radius:8px}
+.rpf-tbl{border-collapse:collapse;width:100%;font-size:12px}
+.rpf-tbl--wide{min-width:1180px}
+.rpf-tbl thead tr{background:#a100ff}
+.rpf-tbl th{color:#fff;font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:10px 12px;text-align:left;white-space:nowrap}
+.rpf-tbl td{border-bottom:1px solid #f0f0f4;padding:9px 12px;vertical-align:top;line-height:1.5}
+.rpf-tbl tbody tr:nth-child(2n){background:#fafafc}
+.rpf-tbl tbody tr:hover{background:#f9f0ff}
+.rpf-tbl td.num{font-family:IBM Plex Mono,monospace;font-weight:700;color:#a100ff;text-align:center}
+.rpf-rat{max-width:330px;font-size:11.5px;color:#4a4a55}
+.rpf-src{font-family:IBM Plex Mono,monospace;font-size:10px;color:#8b8b95}
+.rpf-link{color:#a100ff;font-weight:600;font-size:11px}
+.rpf-empty{padding:26px;text-align:center;color:#9a9aa4;font-size:12px}
+.rpf-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:860px){.rpf-grid2{grid-template-columns:1fr}}
+.rpf-step{border:1px solid #ececf1;border-radius:10px;padding:13px 15px;background:#fff;margin-bottom:10px}
+.rpf-step__hd{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.rpf-step__no{background:#a100ff;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:0 0 24px}
+.rpf-step__nm{font-size:12.5px;font-weight:700}
+.rpf-ul{margin:5px 0 0 16px;padding:0;font-size:11.5px;color:#4a4a55;line-height:1.7}
+.rpf-ol{margin:5px 0 0 18px;padding:0;font-size:12px;color:#3c3c45;line-height:1.8}
+.rpf-kv{display:flex;gap:6px;font-size:11px;color:#6b6b76;margin-top:4px;flex-wrap:wrap}
+.rpf-bar{height:9px;border-radius:5px;background:#eee;overflow:hidden;display:flex;margin:7px 0 3px}
+.rpf-bar i{display:block;height:100%}
+.rpf-foot{text-align:center;color:#9a9aa4;font-size:10.5px;padding:18px 0}
+/* ---- source diagram preview ---- */
+.rpf-prev{border:1px solid #ececf1;border-radius:8px;overflow:auto;background:#fcfcfd;padding:10px;text-align:center;max-height:600px}
+.rpf-prev img,.rpf-prev svg{max-width:100%;height:auto}
+/* ---- swimlane diagram ---- */
+.dgrm{border:1px solid #ececf1;border-radius:8px;background:#fff;overflow:hidden}
+.dgrm__bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;background:#faf6ff;border-bottom:1px solid #ececf1}
+.dgrm__pool{font-size:11.5px;font-weight:700;color:#7500c0}
+.dgrm__lg{display:flex;gap:8px 12px;flex-wrap:wrap;margin-left:auto;font-size:10.5px;color:#55555f;align-items:center;justify-content:flex-end;max-width:100%}
+.dgrm__lg span{display:flex;align-items:center;gap:5px}
+.dgrm__dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.dgrm__scroll{overflow:auto;max-height:640px;padding:6px;cursor:grab}
+.dgrm__scroll.is-pan{cursor:grabbing}
+.dgrm__empty{padding:30px;text-align:center;color:#9a9aa4;font-size:12px}
+/* ---- zoom toolbar ---- */
+.dgrm__zoom{display:flex;align-items:center;gap:3px;margin-left:8px}
+.dgrm__zbtn{background:#fff;border:1px solid #dda0ff;color:#7500c0;border-radius:6px;min-width:26px;height:24px;padding:0 7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1}
+.dgrm__zbtn:hover{background:#a100ff;border-color:#a100ff;color:#fff}
+.dgrm__zbtn--wide{font-size:10.5px;font-weight:600}
+.dgrm__zlvl{font-family:IBM Plex Mono,monospace;font-size:10.5px;font-weight:700;color:#7500c0;min-width:42px;text-align:center}
+.dgrm__hint{font-size:10px;color:#9a9aa4;margin-left:6px}
+.dgrm:fullscreen{background:#fff;padding:10px}
+.dgrm:fullscreen .dgrm__scroll{max-height:calc(100vh - 70px)}
+/* ---- clickable nodes ---- */
+.sw-node{cursor:pointer}
+.sw-node:hover .sw-task{stroke-width:2.6;filter:drop-shadow(0 2px 5px rgba(124,0,212,.35))}
+.sw-hot{fill:#a100ff;opacity:0}
+.sw-node:hover .sw-hot{opacity:.05}
+.sw-badge-i{font-size:9px;font-weight:700;fill:#7C00D4;font-family:Inter,sans-serif}
+/* ---- step modal ---- */
+.smod{position:fixed;inset:0;background:#1c1c1cb3;display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px}
+.smod__box{background:#f4f4f7;border-radius:12px;width:100%;max-width:560px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 18px 50px #00000045}
+.smod__hd{background:linear-gradient(100deg,#7C00D4,#a100ff);color:#fff;padding:13px 16px;display:flex;align-items:flex-start;gap:10px}
+.smod__ttl{font-size:13.5px;font-weight:700;line-height:1.35;flex:1}
+.smod__x{background:none;border:none;color:#fff;font-size:17px;cursor:pointer;line-height:1;padding:0 2px;opacity:.9}
+.smod__x:hover{opacity:1}
+.smod__bd{overflow:auto;padding:12px 14px 16px}
+.smod__sec{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7500c0;margin:4px 0 8px;display:flex;align-items:center;gap:7px}
+.smod__sec:before{content:"";width:6px;height:6px;border-radius:2px;background:#a100ff;display:inline-block;flex:0 0 6px}
+.smod__card{background:#fff;border:1px solid #e7e7ee;border-radius:9px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.smod__card:hover{border-color:#dda0ff;background:#fdfaff}
+.smod__av{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;flex:0 0 28px}
+.smod__nm{font-size:12px;font-weight:700;color:#1c1c1c;line-height:1.35}
+.smod__meta{font-size:10.5px;color:#84848f;margin-top:2px}
+.smod__chev{margin-left:auto;color:#b9b9c4;font-size:14px;flex:0 0 auto}
+.smod__det{background:#fbfaff;border:1px solid #ecdcff;border-top:none;border-radius:0 0 9px 9px;margin:-9px 0 8px;padding:10px 12px;font-size:11.5px;color:#4a4a55;line-height:1.6}
+.smod__det b{color:#1c1c1c}
+.smod__impact{background:#fff;border:1px solid #ecdcff;border-radius:10px;padding:11px 12px}
+.smod__grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+@media(max-width:560px){.smod__grid{grid-template-columns:repeat(2,1fr)}}
+.smod__ic{background:#fafafc;border:1px solid #eeeef3;border-radius:8px;padding:8px 6px;text-align:center}
+.smod__il{font-size:8.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#6b6b76;line-height:1.3;min-height:22px}
+.smod__ip{display:inline-block;border-radius:6px;padding:2px 9px;font-size:10.5px;font-weight:700;margin-top:4px}
+.smod__ip--high{background:#e9fbf3;border:1px solid #a7e8cd;color:#0d7a53}
+.smod__ip--med{background:#fff4e0;border:1px solid #f5cf8f;color:#b45309}
+.smod__ip--low{background:#f2f2f6;border:1px solid #e2e2ea;color:#6b6b76}
+.smod__why{display:block;width:100%;background:none;border:none;color:#9a9aa4;font-size:9.5px;cursor:pointer;font-family:inherit;margin-top:5px;padding:0;text-align:center}
+.smod__why:hover{color:#a100ff}
+.smod__wtx{font-size:9.5px;color:#55555f;line-height:1.5;margin-top:4px;text-align:left;display:none}
+.smod__wtx.on{display:block}
+.smod__none{font-size:11.5px;color:#9a9aa4;padding:10px 0}
+.sw-lane{fill:#fbfbfd;stroke:#e6e6ee;stroke-width:1}
+.sw-lane--alt{fill:#f5f3f9}
+.sw-strip{fill:#a100ff}
+.sw-strip--alt{fill:#7500c0}
+.sw-striptxt{fill:#fff;font-size:11px;font-weight:600;font-family:Inter,sans-serif}
+.sw-task{fill:#fff;stroke:#a100ff;stroke-width:1.4}
+.sw-task--ai{fill:#faf3ff;stroke:#7C00D4;stroke-width:1.8}
+.sw-task--ws{fill:#fffbee;stroke:#E65100;stroke-width:1.6;stroke-dasharray:5 3}
+.sw-txt{font-size:10px;fill:#2b2b33;font-family:Inter,sans-serif;font-weight:600}
+.sw-gw{fill:#fff;stroke:#c2410c;stroke-width:1.4}
+.sw-ev{fill:#fff;stroke:#0d7a53;stroke-width:2}
+.sw-ev--end{stroke:#b3261e;stroke-width:3}
+.sw-flow{fill:none;stroke:#8d8d99;stroke-width:1.3}
+.sw-lbl{font-size:9px;fill:#5a5a66;font-family:Inter,sans-serif;font-weight:600;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+.sw-cap{font-size:9px;fill:#55555f;font-family:Inter,sans-serif;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+.sw-ann{font-size:9px;font-weight:700;font-family:IBM Plex Mono,monospace}
+/* ---- SAP Business Process Hierarchy path ---- */
+.bph{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;padding:2px 0 4px}
+.bph__node{background:#fff;border:1.5px solid #e2e2ea;border-radius:10px;padding:8px 14px;min-width:120px;max-width:280px;display:flex;flex-direction:column;justify-content:center}
+.bph__lvl{font-size:9px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#9a9aa4;margin-bottom:3px}
+.bph__nm{font-size:12px;font-weight:700;color:#2b2b33;line-height:1.35;word-break:break-word}
+.bph__node--last{background:linear-gradient(125deg,#a100ff 0%,#7500c0 100%);border-color:#7500c0;box-shadow:0 4px 12px rgba(161,0,255,.30)}
+.bph__node--last .bph__lvl{color:#ffffffcc}
+.bph__node--last .bph__nm{color:#fff}
+.bph__arw{display:flex;align-items:center;color:#c9c9d3;font-size:16px;font-weight:700;line-height:1}
+.bph__full{font-family:IBM Plex Mono,Consolas,monospace;font-size:10.5px;color:#8b8b95;margin-top:9px;word-break:break-word;line-height:1.6}
+.bph__full b{color:#7500c0}
+
+/* ---- v4.0 proposed-solutions hierarchy ---- */
+.ps-map{display:grid;grid-template-columns:280px minmax(0,1fr);gap:14px;align-items:start}
+.ps-tree{border:1px solid #ececf1;border-radius:10px;background:#fff;padding:8px 0;max-height:540px;overflow:auto}
+.ps-node{display:flex;align-items:flex-start;gap:5px;position:relative;padding:7px 10px 7px calc(10px + var(--depth,0)*14px);cursor:pointer!important;white-space:nowrap;overflow:hidden}
+.ps-node *{cursor:pointer!important}.ps-node:hover{background:#faf3ff}.ps-node.is-selected{background:#f1dfff;color:#6500a8}
+.ps-node:before{content:"";position:absolute;left:calc(14px + var(--depth,0)*14px);top:0;bottom:0;border-left:1px solid #e5e5eb}
+.ps-toggle{width:14px;height:14px;border:0;background:transparent;color:#9696a0;padding:0;line-height:14px;flex:0 0 14px;position:relative;z-index:1}
+.ps-toggle:before{content:"›";display:inline-block;transition:transform .16s}.ps-node.is-open>.ps-toggle:before{transform:rotate(90deg)}.ps-node--task>.ps-toggle:before{content:""}
+.ps-body{min-width:0;flex:1;position:relative;z-index:1}.ps-level{display:inline-block;font:800 8px IBM Plex Mono,Consolas,monospace;color:#7500c0;background:#f0dcff;border-radius:4px;padding:2px 5px;margin-right:5px}
+.ps-node--task .ps-level{color:#0d7a53;background:#e9fbf3;border:1px solid #a7e8cd}.ps-name{display:inline-block;max-width:175px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;font-size:10.5px;font-weight:600}.ps-count{float:right;color:#aaaab3;font:500 9px IBM Plex Mono,Consolas,monospace;margin-left:5px}
+.ps-children{display:none}.ps-children.is-open{display:block}.ps-right{min-width:0}.ps-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.ps-heading{font-size:12px;font-weight:750;color:#2b2b33}.ps-total{font:700 10px IBM Plex Mono,Consolas,monospace;color:#7500c0}
+.ps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;max-height:520px;overflow:auto;padding:1px}.ps-card{border:1px solid #e6e6ed;border-radius:10px;background:#fff;padding:12px}.ps-card.is-hidden{display:none}.ps-solution{border-left:3px solid var(--ps-color,#a100ff);background:#fafafa;border-radius:0 7px 7px 0;padding:8px 9px}.ps-solution--ws{background:#fffbee}.ps-solution-name{font-size:11.5px;font-weight:750;line-height:1.4;color:#2b2b33}.ps-solution-meta{font-size:9px;color:#777781;margin-top:4px;line-height:1.4}
+@media(max-width:900px){.ps-map{grid-template-columns:1fr}.ps-tree,.ps-grid{max-height:none}}
+/* ---- v4.2 proposed-solutions category filter ---- */
+.ps-filter{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.ps-filter .rpf-fchip{padding:4px 11px;font-size:10.5px}.ps-fn{font-weight:500;opacity:.85;margin-left:2px}
+.ps-headr{display:flex;align-items:center;gap:8px}.ps-reset{padding:5px 10px;font-size:10.5px}
+.ps-empty[hidden]{display:none}.ps-empty{border:1px dashed #e2e2ea;border-radius:10px;background:#fff}
+.ps-filter .rpf-fchip:focus-visible,.ps-reset:focus-visible,.ps-node:focus-visible,.ps-toggle:focus-visible{outline:2px solid #7500c0;outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="rpf-shell">
+  <div class="rpf-hdr">
+    <div class="rpf-hdr__eyebrow">SAP Business Process Hierarchy · Agentic Reimagination</div>
+    <div class="rpf-hdr__title" id="hdrTitle"></div>
+    <div class="rpf-hdr__meta" id="hdrMeta"></div>
+  </div>
+  <div class="rpf-tabs" id="tabs"></div>
+  <div id="p-current" class="rpf-panel rpf-panel--active"></div>
+  <div id="p-discovery" class="rpf-panel"></div>
+  <div id="p-reimagine" class="rpf-panel"></div>
+  <div id="p-summary" class="rpf-panel"></div>
+  <div class="rpf-foot" id="foot"></div>
+</div>
+
+<script>window.__REIMAGINE_DATA__ = {"meta": {"process_id": "SC_WM_IM_CODE_DATE_LOT_ROTATION", "process_name": "Manage code date / lot code tracking and rotation", "l1": "Supply Chain", "l2": "Warehouse Management", "l3": "Inventory Management", "industry": "Consumer Goods and Services", "function": "Warehouse Management", "generated_on": "2026-10-08", "input_mode": "bph", "bph_path": "Supply Chain > Warehouse Management > Inventory Management > Manage code date / lot code tracking and rotation", "source_file_name": null, "source_diagram_image": null}, "current_process_overview": {"business_context": "The process establishes lot and shelf-life controls, captures inbound batch attributes, applies date-based rotation, executes lot-specific movements, and closes with exception and traceability review.", "process_summary": ["This process manages code dates and lot identity across warehouse inventory.", "Warehouse, master data, receiving, quality, and inventory-control roles maintain batch-handling information.", "Inbound lots are captured, validated, identified, and put away with shelf-life context.", "Stored inventory is monitored and prioritized using FEFO or FIFO before outbound picking.", "Blocked or short-dated stock is reviewed and batch movements are reconciled for traceability."], "pain_points": ["The Warehouse Inventory Manager must translate product handling expectations into consistent lot, date, and rotation rules; no qualified solution exists today - whitespace for a custom tracking-policy design build.", "The Master Data Specialist must align shelf-life fields and batch characteristics for consistent date decisions; no qualified solution exists today - whitespace for a custom master-data validation build.", "The Warehouse Receiving Clerk can mistype supplier lot and date details while matching physical stock to inbound records, weakening downstream batch identification.", "The Quality Technician must compare receipt dates, remaining shelf life, and lot attributes before acceptance when evidence may be incomplete.", "The Warehouse Receiving Clerk must keep the system batch record and physical lot label synchronized so stock retains its traceable identity.", "The Warehouse Operator must preserve the correct lot and expiration details while completing putaway across similar materials and multiple bins.", "The Inventory Controller must identify approaching expirations across stored batches early enough to prevent short-dated stock from remaining unnoticed.", "The Warehouse Inventory Manager must balance FEFO or FIFO rules with stock eligibility and batch status when several lots are available.", "The Warehouse Operator must confirm the exact selected batch so the outbound delivery and physical stock retain the same lot identity.", "The Inventory Controller must distinguish expired, blocked, and short-dated batches and coordinate a defensible status or disposition decision.", "The Warehouse Inventory Manager must connect batch-level receipt, storage, picking, and issue records to investigate traceability gaps and rotation exceptions."], "steps": [{"step_no": 1, "business_process_step": "Define code date and lot tracking requirements", "role": "Warehouse Inventory Manager", "system": "-", "description": "Define lot identifiers, code-date attributes, shelf-life thresholds, and stock-rotation rules.", "pain_points": ["The Warehouse Inventory Manager must translate product handling expectations into consistent lot, date, and rotation rules; no qualified solution exists today - whitespace for a custom tracking-policy design build."], "gateway_next_step": [{"condition": "Continue", "next_step": "Maintain material shelf-life and batch master data"}]}, {"step_no": 2, "business_process_step": "Maintain material shelf-life and batch master data", "role": "Master Data Specialist", "system": "-", "description": "Maintain material and batch data for shelf life, expiration dates, lot characteristics, and minimum remaining shelf life.", "pain_points": ["The Master Data Specialist must align shelf-life fields and batch characteristics for consistent date decisions; no qualified solution exists today - whitespace for a custom master-data validation build."], "gateway_next_step": [{"condition": "Continue", "next_step": "Capture supplier lot and code date at goods receipt"}]}, {"step_no": 3, "business_process_step": "Capture supplier lot and code date at goods receipt", "role": "Warehouse Receiving Clerk", "system": "SAP S/4HANA / EWM", "description": "Record supplier lot, manufacturing or code date, and expiration information at inbound receipt.", "pain_points": ["The Warehouse Receiving Clerk can mistype supplier lot and date details while matching physical stock to inbound records, weakening downstream batch identification."], "gateway_next_step": [{"condition": "Continue", "next_step": "Validate remaining shelf life and lot attributes"}]}, {"step_no": 4, "business_process_step": "Validate remaining shelf life and lot attributes", "role": "Quality Technician", "system": "SAP S/4HANA / EWM", "description": "Check remaining shelf life and mandatory lot attributes before inventory acceptance.", "pain_points": ["The Quality Technician must compare receipt dates, remaining shelf life, and lot attributes before acceptance when evidence may be incomplete."], "gateway_next_step": [{"condition": "Continue", "next_step": "Create and label warehouse batch stock"}]}, {"step_no": 5, "business_process_step": "Create and label warehouse batch stock", "role": "Warehouse Receiving Clerk", "system": "SAP S/4HANA / EWM", "description": "Create the warehouse batch stock record and apply the required lot-identification label.", "pain_points": ["The Warehouse Receiving Clerk must keep the system batch record and physical lot label synchronized so stock retains its traceable identity."], "gateway_next_step": [{"condition": "Continue", "next_step": "Put away stock by lot and expiration date"}]}, {"step_no": 6, "business_process_step": "Put away stock by lot and expiration date", "role": "Warehouse Operator", "system": "SAP S/4HANA / EWM", "description": "Execute and confirm putaway while preserving lot, expiration date, and storage-bin information.", "pain_points": ["The Warehouse Operator must preserve the correct lot and expiration details while completing putaway across similar materials and multiple bins."], "gateway_next_step": [{"condition": "Continue", "next_step": "Monitor aging inventory and shelf-life exceptions"}]}, {"step_no": 7, "business_process_step": "Monitor aging inventory and shelf-life exceptions", "role": "Inventory Controller", "system": "SAP S/4HANA / EWM", "description": "Review stored batches for approaching expiration, expired stock, missing dates, and shelf-life exceptions.", "pain_points": ["The Inventory Controller must identify approaching expirations across stored batches early enough to prevent short-dated stock from remaining unnoticed."], "gateway_next_step": [{"condition": "Continue", "next_step": "Prioritize lots using FEFO or FIFO rotation"}]}, {"step_no": 8, "business_process_step": "Prioritize lots using FEFO or FIFO rotation", "role": "Warehouse Inventory Manager", "system": "SAP S/4HANA / EWM", "description": "Apply FEFO or FIFO criteria to determine the eligible lot removed first.", "pain_points": ["The Warehouse Inventory Manager must balance FEFO or FIFO rules with stock eligibility and batch status when several lots are available."], "gateway_next_step": [{"condition": "Continue", "next_step": "Pick and confirm the selected lot for outbound delivery"}]}, {"step_no": 9, "business_process_step": "Pick and confirm the selected lot for outbound delivery", "role": "Warehouse Operator", "system": "SAP S/4HANA / EWM", "description": "Pick the selected batch for the outbound delivery and confirm the warehouse task with lot traceability.", "pain_points": ["The Warehouse Operator must confirm the exact selected batch so the outbound delivery and physical stock retain the same lot identity."], "gateway_next_step": [{"condition": "Continue", "next_step": "Review blocked expired or short-dated stock"}]}, {"step_no": 10, "business_process_step": "Review blocked expired or short-dated stock", "role": "Inventory Controller", "system": "SAP S/4HANA / EWM", "description": "Review blocked, expired, or short-dated batches and determine the inventory disposition or status action.", "pain_points": ["The Inventory Controller must distinguish expired, blocked, and short-dated batches and coordinate a defensible status or disposition decision."], "gateway_next_step": [{"condition": "Continue", "next_step": "Reconcile lot traceability and rotation compliance"}]}, {"step_no": 11, "business_process_step": "Reconcile lot traceability and rotation compliance", "role": "Warehouse Inventory Manager", "system": "SAP S/4HANA / EWM", "description": "Reconcile batch-level receipts, storage, picking, issues, and exception records for traceability and rotation adherence.", "pain_points": ["The Warehouse Inventory Manager must connect batch-level receipt, storage, picking, and issue records to investigate traceability gaps and rotation exceptions."], "gateway_next_step": [{"condition": "Continue", "next_step": "End"}]}], "diagram": {"pool_name": "Manage code date / lot code tracking and rotation", "lanes": [{"lane_id": "lane1", "lane_name": "Warehouse Inventory Manager"}, {"lane_id": "lane2", "lane_name": "Master Data Specialist"}, {"lane_id": "lane3", "lane_name": "Warehouse Receiving Clerk"}, {"lane_id": "lane4", "lane_name": "Quality Technician"}, {"lane_id": "lane5", "lane_name": "Warehouse Operator"}, {"lane_id": "lane6", "lane_name": "Inventory Controller"}], "elements": [{"id": "S1", "kind": "event-start", "label": "Inventory tracking need identified", "lane_id": "lane1", "column": 0}, {"id": "T1", "kind": "task", "label": "Define code date and lot tracking requirements", "lane_id": "lane1", "column": 1}, {"id": "T2", "kind": "task", "label": "Maintain material shelf-life and batch master data", "lane_id": "lane2", "column": 2}, {"id": "T3", "kind": "task", "label": "Capture supplier lot and code date at goods receipt", "lane_id": "lane3", "column": 3}, {"id": "T4", "kind": "task", "label": "Validate remaining shelf life and lot attributes", "lane_id": "lane4", "column": 4}, {"id": "T5", "kind": "task", "label": "Create and label warehouse batch stock", "lane_id": "lane3", "column": 5}, {"id": "T6", "kind": "task", "label": "Put away stock by lot and expiration date", "lane_id": "lane5", "column": 6}, {"id": "T7", "kind": "task", "label": "Monitor aging inventory and shelf-life exceptions", "lane_id": "lane6", "column": 7}, {"id": "T8", "kind": "task", "label": "Prioritize lots using FEFO or FIFO rotation", "lane_id": "lane1", "column": 8}, {"id": "T9", "kind": "task", "label": "Pick and confirm the selected lot for outbound delivery", "lane_id": "lane5", "column": 9}, {"id": "T10", "kind": "task", "label": "Review blocked expired or short-dated stock", "lane_id": "lane6", "column": 10}, {"id": "T11", "kind": "task", "label": "Reconcile lot traceability and rotation compliance", "lane_id": "lane1", "column": 11}, {"id": "E1", "kind": "event-end", "label": "Lot rotation and traceability reviewed", "lane_id": "lane1", "column": 12}], "connections": [{"from": "S1", "to": "T1", "label": ""}, {"from": "T1", "to": "T2", "label": ""}, {"from": "T2", "to": "T3", "label": ""}, {"from": "T3", "to": "T4", "label": ""}, {"from": "T4", "to": "T5", "label": ""}, {"from": "T5", "to": "T6", "label": ""}, {"from": "T6", "to": "T7", "label": ""}, {"from": "T7", "to": "T8", "label": ""}, {"from": "T8", "to": "T9", "label": ""}, {"from": "T9", "to": "T10", "label": ""}, {"from": "T10", "to": "T11", "label": ""}, {"from": "T11", "to": "E1", "label": ""}]}}, "agentic_discovery": {"executive_summary": ["Direct CGS scenario support was found for EWM batch management, shelf-life inspection, batch determination, status changes, and batch-level physical inventory.", "SAP Business AI Joule Skills directly support confirmation of putaway and picking tasks.", "Policy design and combined shelf-life master-data validation remain Whitespace."], "business_process_table": [{"step_no": 1, "business_process_step": "Define code date and lot tracking requirements", "role": "Warehouse Inventory Manager", "gateway_next_step": [{"condition": "Continue", "next_step": "Maintain material shelf-life and batch master data"}], "mappings": [{"category": "Whitespace", "name": "—", "type": "Whitespace", "rationale": "No evaluated source directly defines enterprise-specific code-date, lot-code, and rotation policies for this task boundary.", "product": "-", "source_ref": "-", "link": null, "challenge": "-", "value": "-", "benefits": [], "kpis": []}]}, {"step_no": 2, "business_process_step": "Maintain material shelf-life and batch master data", "role": "Master Data Specialist", "gateway_next_step": [{"condition": "Continue", "next_step": "Capture supplier lot and code date at goods receipt"}], "mappings": [{"category": "Whitespace", "name": "—", "type": "Whitespace", "rationale": "No evaluated source directly maintains the combined material shelf-life fields and batch master attributes required by this task.", "product": "-", "source_ref": "-", "link": null, "challenge": "-", "value": "-", "benefits": [], "kpis": []}]}, {"step_no": 3, "business_process_step": "Capture supplier lot and code date at goods receipt", "role": "Warehouse Receiving Clerk", "gateway_next_step": [{"condition": "Continue", "next_step": "Validate remaining shelf life and lot attributes"}], "mappings": [{"category": "CGS Scenarios", "name": "EWM Integration- Batch Management", "type": "Scenario - Standard", "rationale": "The scenario directly supports batches being created or received and carrying batch characteristics and status at inbound receipt.", "product": "On Premise", "source_ref": "S1 > Scenarios > Supply Chain / Warehousing", "link": "https://ts.accenture.com/sites/CGSandRetailMyConcertoP4BArchive/Shared Documents/Forms/AllItems.aspx?RootFolder=/sites%2FCGSandRetailMyConcertoP4BArchive%2FShared%20Documents%2FGeneral%2FRefreshed%20Integrated%20CGS%20Documents%2FSupply%20Chain%2FWarehousing%2FEWM%20Integration%2D%20Batch%20Management&View=%7BD93BB2C7%2DA03F%2D4935%2DAEEC%2DA52D57EFE78D%7D", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "Traceability time (hours to trace batch)"}, {"name": "Batch determination accuracy (%)"}, {"name": "Expired / blocked batch value"}, {"name": "Recall readiness score"}, {"name": "Warehouse order cycle time"}]}]}, {"step_no": 4, "business_process_step": "Validate remaining shelf life and lot attributes", "role": "Quality Technician", "gateway_next_step": [{"condition": "Continue", "next_step": "Create and label warehouse batch stock"}], "mappings": [{"category": "CGS Scenarios", "name": "Shelf life Inspection", "type": "Scenario - Standard", "rationale": "The scenario directly supports shelf-life inspection of stored batches, usage decisions, and batch status updates.", "product": "On Premise", "source_ref": "S1 > Scenarios > Manufacturing / Quality Management", "link": "https://ts.accenture.com/sites/CGSandRetailMyConcertoP4BArchive/Shared Documents/Forms/AllItems.aspx?RootFolder=/sites%2FCGSandRetailMyConcertoP4BArchive%2FShared%20Documents%2FGeneral%2FRefreshed%20Integrated%20CGS%20Documents%2FManufacturing%2FQuality%20Management%2FShelf%20life%20Inspection&View=%7BD93BB2C7%2DA03F%2D4935%2DAEEC%2DA52D57EFE78D%7D", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "First-pass yield (%)"}, {"name": "Inspection lot cycle time"}, {"name": "Defect / rejection rate (ppm)"}, {"name": "Cost of poor quality"}, {"name": "Inspection cycle time"}]}]}, {"step_no": 5, "business_process_step": "Create and label warehouse batch stock", "role": "Warehouse Receiving Clerk", "gateway_next_step": [{"condition": "Continue", "next_step": "Put away stock by lot and expiration date"}], "mappings": [{"category": "CGS Scenarios", "name": "EWM Integration- Batch Management", "type": "Scenario - Standard", "rationale": "The scenario supports creating or receiving batch stock and maintaining characteristics; label application remains an operational activity.", "product": "On Premise", "source_ref": "S1 > Scenarios > Supply Chain / Warehousing", "link": "https://ts.accenture.com/sites/CGSandRetailMyConcertoP4BArchive/Shared Documents/Forms/AllItems.aspx?RootFolder=/sites%2FCGSandRetailMyConcertoP4BArchive%2FShared%20Documents%2FGeneral%2FRefreshed%20Integrated%20CGS%20Documents%2FSupply%20Chain%2FWarehousing%2FEWM%20Integration%2D%20Batch%20Management&View=%7BD93BB2C7%2DA03F%2D4935%2DAEEC%2DA52D57EFE78D%7D", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "Traceability time (hours to trace batch)"}, {"name": "Batch determination accuracy (%)"}, {"name": "Expired / blocked batch value"}, {"name": "Recall readiness score"}, {"name": "Warehouse order cycle time"}]}]}, {"step_no": 6, "business_process_step": "Put away stock by lot and expiration date", "role": "Warehouse Operator", "gateway_next_step": [{"condition": "Continue", "next_step": "Monitor aging inventory and shelf-life exceptions"}], "mappings": [{"category": "SAP Business AI", "name": "Confirm warehouse task", "type": "Joule Skill - -", "rationale": "The Joule Skill directly confirms open putaway warehouse tasks, closing the stock-placement execution step.", "product": "-", "source_ref": "S4 > Joule Skills > -", "link": "https://community.sap.com/t5/supply-chain-management-q-a/ai-in-warehousing-what-you-need-to-start-with-joule/qaq-p/14345541", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "Order/warehouse task cycle-time reduction (%)"}, {"name": "inventory or delivery accuracy (%)"}, {"name": "exception-free completion rate (%)"}]}]}, {"step_no": 7, "business_process_step": "Monitor aging inventory and shelf-life exceptions", "role": "Inventory Controller", "gateway_next_step": [{"condition": "Continue", "next_step": "Prioritize lots using FEFO or FIFO rotation"}], "mappings": [{"category": "CGS Scenarios", "name": "Shelf life Inspection", "type": "Scenario - Standard", "rationale": "The scenario schedules recurring shelf-life inspections for stored batches and updates the next date and status.", "product": "On Premise", "source_ref": "S1 > Scenarios > Manufacturing / Quality Management", "link": "https://ts.accenture.com/sites/CGSandRetailMyConcertoP4BArchive/Shared Documents/Forms/AllItems.aspx?RootFolder=/sites%2FCGSandRetailMyConcertoP4BArchive%2FShared%20Documents%2FGeneral%2FRefreshed%20Integrated%20CGS%20Documents%2FManufacturing%2FQuality%20Management%2FShelf%20life%20Inspection&View=%7BD93BB2C7%2DA03F%2D4935%2DAEEC%2DA52D57EFE78D%7D", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "First-pass yield (%)"}, {"name": "Inspection lot cycle time"}, {"name": "Defect / rejection rate (ppm)"}, {"name": "Cost of poor quality"}, {"name": "Inspection cycle time"}]}]}, {"step_no": 8, "business_process_step": "Prioritize lots using FEFO or FIFO rotation", "role": "Warehouse Inventory Manager", "gateway_next_step": [{"condition": "Continue", "next_step": "Pick and confirm the selected lot for outbound delivery"}], "mappings": [{"category": "CGS Scenarios", "name": "EWM Batch Determination and End to End PP-EWM cycle", "type": "Scenario - Standard", "rationale": "The scenario directly selects batches during picking by FEFO or other criteria.", "product": "On Premise", "source_ref": "S1 > Scenarios > Supply Chain / Warehousing", "link": "https://ts.accenture.com/sites/CGSandRetailMyConcertoP4BArchive/Shared Documents/Forms/AllItems.aspx?RootFolder=/sites%2FCGSandRetailMyConcertoP4BArchive%2FShared%20Documents%2FGeneral%2FRefreshed%20Integrated%20CGS%20Documents%2FSupply%20Chain%2FWarehousing%2FEWM%20Batch%20Determination%20and%20End%20to%20End%20PP%2DEWM%20cycle&View=%7BD93BB2C7%2DA03F%2D4935%2DAEEC%2DA52D57EFE78D%7D", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "Traceability time (hours to trace batch)"}, {"name": "Batch determination accuracy (%)"}, {"name": "Expired / blocked batch value"}, {"name": "Recall readiness score"}, {"name": "Warehouse order cycle time"}]}]}, {"step_no": 9, "business_process_step": "Pick and confirm the selected lot for outbound delivery", "role": "Warehouse Operator", "gateway_next_step": [{"condition": "Continue", "next_step": "Review blocked expired or short-dated stock"}], "mappings": [{"category": "SAP Business AI", "name": "Confirm warehouse task", "type": "Joule Skill - -", "rationale": "The Joule Skill directly confirms open picking warehouse tasks in the EWM outbound process.", "product": "-", "source_ref": "S4 > Joule Skills > -", "link": "https://community.sap.com/t5/supply-chain-management-q-a/ai-in-warehousing-what-you-need-to-start-with-joule/qaq-p/14345541", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "Order/warehouse task cycle-time reduction (%)"}, {"name": "inventory or delivery accuracy (%)"}, {"name": "exception-free completion rate (%)"}]}]}, {"step_no": 10, "business_process_step": "Review blocked expired or short-dated stock", "role": "Inventory Controller", "gateway_next_step": [{"condition": "Continue", "next_step": "Reconcile lot traceability and rotation compliance"}], "mappings": [{"category": "CGS Scenarios", "name": "EWM Batch Status change Process", "type": "Scenario - Standard", "rationale": "The scenario directly supports batch status changes after batch selection for blocked or unusable inventory.", "product": "On Premise", "source_ref": "S1 > Scenarios > Supply Chain / Warehousing", "link": "https://ts.accenture.com/sites/CGSandRetailMyConcertoP4BArchive/Shared Documents/Forms/AllItems.aspx?RootFolder=/sites%2FCGSandRetailMyConcertoP4BArchive%2FShared%20Documents%2FGeneral%2FRefreshed%20Integrated%20CGS%20Documents%2FSupply%20Chain%2FWarehousing%2FEWM%20Batch%20Status%20change%20Process&View=%7BD93BB2C7%2DA03F%2D4935%2DAEEC%2DA52D57EFE78D%7D", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "Traceability time (hours to trace batch)"}, {"name": "Batch determination accuracy (%)"}, {"name": "Expired / blocked batch value"}, {"name": "Recall readiness score"}, {"name": "Warehouse order cycle time"}]}]}, {"step_no": 11, "business_process_step": "Reconcile lot traceability and rotation compliance", "role": "Warehouse Inventory Manager", "gateway_next_step": [{"condition": "Continue", "next_step": "End"}], "mappings": [{"category": "CGS Scenarios", "name": "Physical Inventory using Batch and Serial Number Management", "type": "Scenario - Standard", "rationale": "The scenario counts batch-managed stock, posts differences, and supports batch traceability analysis.", "product": "On Premise", "source_ref": "S1 > Scenarios > Sourcing and Procurement / Operational Procurement", "link": "https://ts.accenture.com/sites/CGSandRetailMyConcertoP4BArchive/Shared Documents/Forms/AllItems.aspx?RootFolder=/sites%2FCGSandRetailMyConcertoP4BArchive%2FShared%20Documents%2FGeneral%2FRefreshed%20Integrated%20CGS%20Documents%2FSourcing%20and%20Procurement%2FOperational%20Procurement%2FPhysical%20Inventory%20using%20Batch%20and%20Serial%20Number%20Management&View=%7BD93BB2C7%2DA03F%2D4935%2DAEEC%2DA52D57EFE78D%7D", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "Inventory record accuracy (%)"}, {"name": "Inventory turns"}, {"name": "Stock write-off / scrap value"}, {"name": "Goods movement posting errors"}, {"name": "Procure-to-pay cycle time"}]}]}]}, "reimagine_process_flow": {"business_process_table": [{"step_no": 1, "business_process_step": "Define code date and lot tracking requirements", "role": "Warehouse Inventory Manager", "gateway_next_step": [{"condition": "Continue", "next_step": "Maintain material shelf-life and batch master data"}], "mappings": [{"category": "Whitespace", "name": "—", "type": "Whitespace", "rationale": "No evaluated source directly defines enterprise-specific code-date, lot-code, and rotation policies for this task boundary.", "product": "-", "source_ref": "-", "link": null, "challenge": "-", "value": "-", "benefits": [], "kpis": []}], "to_be": "Design a governed custom capability for define code date and lot tracking requirements.", "process_impact": {"cost": {"qualitative_rating": "Low", "description": "The reimagined task provides a qualitative cost improvement within the mapped boundary."}, "cycle_time": {"qualitative_rating": "Low", "description": "The reimagined task provides a qualitative cycle time improvement within the mapped boundary."}, "experience": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative experience improvement within the mapped boundary."}, "productivity": {"qualitative_rating": "Low", "description": "The reimagined task provides a qualitative productivity improvement within the mapped boundary."}, "risk": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative risk improvement within the mapped boundary."}}}, {"step_no": 2, "business_process_step": "Maintain material shelf-life and batch master data", "role": "Master Data Specialist", "gateway_next_step": [{"condition": "Continue", "next_step": "Capture supplier lot and code date at goods receipt"}], "mappings": [{"category": "Whitespace", "name": "—", "type": "Whitespace", "rationale": "No evaluated source directly maintains the combined material shelf-life fields and batch master attributes required by this task.", "product": "-", "source_ref": "-", "link": null, "challenge": "-", "value": "-", "benefits": [], "kpis": []}], "to_be": "Design a governed custom capability for maintain material shelf-life and batch master data.", "process_impact": {"cost": {"qualitative_rating": "Low", "description": "The reimagined task provides a qualitative cost improvement within the mapped boundary."}, "cycle_time": {"qualitative_rating": "Low", "description": "The reimagined task provides a qualitative cycle time improvement within the mapped boundary."}, "experience": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative experience improvement within the mapped boundary."}, "productivity": {"qualitative_rating": "Low", "description": "The reimagined task provides a qualitative productivity improvement within the mapped boundary."}, "risk": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative risk improvement within the mapped boundary."}}}, {"step_no": 3, "business_process_step": "Capture supplier lot and code date at goods receipt", "role": "Warehouse Receiving Clerk", "gateway_next_step": [{"condition": "Continue", "next_step": "Validate remaining shelf life and lot attributes"}], "mappings": [{"category": "CGS Scenarios", "name": "EWM Integration- Batch Management", "type": "Scenario - Standard", "rationale": "The scenario directly supports batches being created or received and carrying batch characteristics and status at inbound receipt.", "product": "On Premise", "source_ref": "S1 > Scenarios > Supply Chain / Warehousing", "link": "https://ts.accenture.com/sites/CGSandRetailMyConcertoP4BArchive/Shared Documents/Forms/AllItems.aspx?RootFolder=/sites%2FCGSandRetailMyConcertoP4BArchive%2FShared%20Documents%2FGeneral%2FRefreshed%20Integrated%20CGS%20Documents%2FSupply%20Chain%2FWarehousing%2FEWM%20Integration%2D%20Batch%20Management&View=%7BD93BB2C7%2DA03F%2D4935%2DAEEC%2DA52D57EFE78D%7D", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "Traceability time (hours to trace batch)"}, {"name": "Batch determination accuracy (%)"}, {"name": "Expired / blocked batch value"}, {"name": "Recall readiness score"}, {"name": "Warehouse order cycle time"}]}], "to_be": "Use EWM Integration- Batch Management to support capture supplier lot and code date at goods receipt.", "process_impact": {"cost": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cost improvement within the mapped boundary."}, "cycle_time": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cycle time improvement within the mapped boundary."}, "experience": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative experience improvement within the mapped boundary."}, "productivity": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative productivity improvement within the mapped boundary."}, "risk": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative risk improvement within the mapped boundary."}}}, {"step_no": 4, "business_process_step": "Validate remaining shelf life and lot attributes", "role": "Quality Technician", "gateway_next_step": [{"condition": "Continue", "next_step": "Create and label warehouse batch stock"}], "mappings": [{"category": "CGS Scenarios", "name": "Shelf life Inspection", "type": "Scenario - Standard", "rationale": "The scenario directly supports shelf-life inspection of stored batches, usage decisions, and batch status updates.", "product": "On Premise", "source_ref": "S1 > Scenarios > Manufacturing / Quality Management", "link": "https://ts.accenture.com/sites/CGSandRetailMyConcertoP4BArchive/Shared Documents/Forms/AllItems.aspx?RootFolder=/sites%2FCGSandRetailMyConcertoP4BArchive%2FShared%20Documents%2FGeneral%2FRefreshed%20Integrated%20CGS%20Documents%2FManufacturing%2FQuality%20Management%2FShelf%20life%20Inspection&View=%7BD93BB2C7%2DA03F%2D4935%2DAEEC%2DA52D57EFE78D%7D", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "First-pass yield (%)"}, {"name": "Inspection lot cycle time"}, {"name": "Defect / rejection rate (ppm)"}, {"name": "Cost of poor quality"}, {"name": "Inspection cycle time"}]}], "to_be": "Use Shelf life Inspection to support validate remaining shelf life and lot attributes.", "process_impact": {"cost": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cost improvement within the mapped boundary."}, "cycle_time": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cycle time improvement within the mapped boundary."}, "experience": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative experience improvement within the mapped boundary."}, "productivity": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative productivity improvement within the mapped boundary."}, "risk": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative risk improvement within the mapped boundary."}}}, {"step_no": 5, "business_process_step": "Create and label warehouse batch stock", "role": "Warehouse Receiving Clerk", "gateway_next_step": [{"condition": "Continue", "next_step": "Put away stock by lot and expiration date"}], "mappings": [{"category": "CGS Scenarios", "name": "EWM Integration- Batch Management", "type": "Scenario - Standard", "rationale": "The scenario supports creating or receiving batch stock and maintaining characteristics; label application remains an operational activity.", "product": "On Premise", "source_ref": "S1 > Scenarios > Supply Chain / Warehousing", "link": "https://ts.accenture.com/sites/CGSandRetailMyConcertoP4BArchive/Shared Documents/Forms/AllItems.aspx?RootFolder=/sites%2FCGSandRetailMyConcertoP4BArchive%2FShared%20Documents%2FGeneral%2FRefreshed%20Integrated%20CGS%20Documents%2FSupply%20Chain%2FWarehousing%2FEWM%20Integration%2D%20Batch%20Management&View=%7BD93BB2C7%2DA03F%2D4935%2DAEEC%2DA52D57EFE78D%7D", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "Traceability time (hours to trace batch)"}, {"name": "Batch determination accuracy (%)"}, {"name": "Expired / blocked batch value"}, {"name": "Recall readiness score"}, {"name": "Warehouse order cycle time"}]}], "to_be": "Use EWM Integration- Batch Management to support create and label warehouse batch stock.", "process_impact": {"cost": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cost improvement within the mapped boundary."}, "cycle_time": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cycle time improvement within the mapped boundary."}, "experience": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative experience improvement within the mapped boundary."}, "productivity": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative productivity improvement within the mapped boundary."}, "risk": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative risk improvement within the mapped boundary."}}}, {"step_no": 6, "business_process_step": "Put away stock by lot and expiration date", "role": "Warehouse Operator", "gateway_next_step": [{"condition": "Continue", "next_step": "Monitor aging inventory and shelf-life exceptions"}], "mappings": [{"category": "SAP Business AI", "name": "Confirm warehouse task", "type": "Joule Skill - -", "rationale": "The Joule Skill directly confirms open putaway warehouse tasks, closing the stock-placement execution step.", "product": "-", "source_ref": "S4 > Joule Skills > -", "link": "https://community.sap.com/t5/supply-chain-management-q-a/ai-in-warehousing-what-you-need-to-start-with-joule/qaq-p/14345541", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "Order/warehouse task cycle-time reduction (%)"}, {"name": "inventory or delivery accuracy (%)"}, {"name": "exception-free completion rate (%)"}]}], "to_be": "Use Confirm warehouse task to support put away stock by lot and expiration date.", "process_impact": {"cost": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cost improvement within the mapped boundary."}, "cycle_time": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cycle time improvement within the mapped boundary."}, "experience": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative experience improvement within the mapped boundary."}, "productivity": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative productivity improvement within the mapped boundary."}, "risk": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative risk improvement within the mapped boundary."}}}, {"step_no": 7, "business_process_step": "Monitor aging inventory and shelf-life exceptions", "role": "Inventory Controller", "gateway_next_step": [{"condition": "Continue", "next_step": "Prioritize lots using FEFO or FIFO rotation"}], "mappings": [{"category": "CGS Scenarios", "name": "Shelf life Inspection", "type": "Scenario - Standard", "rationale": "The scenario schedules recurring shelf-life inspections for stored batches and updates the next date and status.", "product": "On Premise", "source_ref": "S1 > Scenarios > Manufacturing / Quality Management", "link": "https://ts.accenture.com/sites/CGSandRetailMyConcertoP4BArchive/Shared Documents/Forms/AllItems.aspx?RootFolder=/sites%2FCGSandRetailMyConcertoP4BArchive%2FShared%20Documents%2FGeneral%2FRefreshed%20Integrated%20CGS%20Documents%2FManufacturing%2FQuality%20Management%2FShelf%20life%20Inspection&View=%7BD93BB2C7%2DA03F%2D4935%2DAEEC%2DA52D57EFE78D%7D", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "First-pass yield (%)"}, {"name": "Inspection lot cycle time"}, {"name": "Defect / rejection rate (ppm)"}, {"name": "Cost of poor quality"}, {"name": "Inspection cycle time"}]}], "to_be": "Use Shelf life Inspection to support monitor aging inventory and shelf-life exceptions.", "process_impact": {"cost": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cost improvement within the mapped boundary."}, "cycle_time": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cycle time improvement within the mapped boundary."}, "experience": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative experience improvement within the mapped boundary."}, "productivity": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative productivity improvement within the mapped boundary."}, "risk": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative risk improvement within the mapped boundary."}}}, {"step_no": 8, "business_process_step": "Prioritize lots using FEFO or FIFO rotation", "role": "Warehouse Inventory Manager", "gateway_next_step": [{"condition": "Continue", "next_step": "Pick and confirm the selected lot for outbound delivery"}], "mappings": [{"category": "CGS Scenarios", "name": "EWM Batch Determination and End to End PP-EWM cycle", "type": "Scenario - Standard", "rationale": "The scenario directly selects batches during picking by FEFO or other criteria.", "product": "On Premise", "source_ref": "S1 > Scenarios > Supply Chain / Warehousing", "link": "https://ts.accenture.com/sites/CGSandRetailMyConcertoP4BArchive/Shared Documents/Forms/AllItems.aspx?RootFolder=/sites%2FCGSandRetailMyConcertoP4BArchive%2FShared%20Documents%2FGeneral%2FRefreshed%20Integrated%20CGS%20Documents%2FSupply%20Chain%2FWarehousing%2FEWM%20Batch%20Determination%20and%20End%20to%20End%20PP%2DEWM%20cycle&View=%7BD93BB2C7%2DA03F%2D4935%2DAEEC%2DA52D57EFE78D%7D", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "Traceability time (hours to trace batch)"}, {"name": "Batch determination accuracy (%)"}, {"name": "Expired / blocked batch value"}, {"name": "Recall readiness score"}, {"name": "Warehouse order cycle time"}]}], "to_be": "Use EWM Batch Determination and End to End PP-EWM cycle to support prioritize lots using fefo or fifo rotation.", "process_impact": {"cost": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cost improvement within the mapped boundary."}, "cycle_time": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cycle time improvement within the mapped boundary."}, "experience": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative experience improvement within the mapped boundary."}, "productivity": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative productivity improvement within the mapped boundary."}, "risk": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative risk improvement within the mapped boundary."}}}, {"step_no": 9, "business_process_step": "Pick and confirm the selected lot for outbound delivery", "role": "Warehouse Operator", "gateway_next_step": [{"condition": "Continue", "next_step": "Review blocked expired or short-dated stock"}], "mappings": [{"category": "SAP Business AI", "name": "Confirm warehouse task", "type": "Joule Skill - -", "rationale": "The Joule Skill directly confirms open picking warehouse tasks in the EWM outbound process.", "product": "-", "source_ref": "S4 > Joule Skills > -", "link": "https://community.sap.com/t5/supply-chain-management-q-a/ai-in-warehousing-what-you-need-to-start-with-joule/qaq-p/14345541", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "Order/warehouse task cycle-time reduction (%)"}, {"name": "inventory or delivery accuracy (%)"}, {"name": "exception-free completion rate (%)"}]}], "to_be": "Use Confirm warehouse task to support pick and confirm the selected lot for outbound delivery.", "process_impact": {"cost": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cost improvement within the mapped boundary."}, "cycle_time": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cycle time improvement within the mapped boundary."}, "experience": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative experience improvement within the mapped boundary."}, "productivity": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative productivity improvement within the mapped boundary."}, "risk": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative risk improvement within the mapped boundary."}}}, {"step_no": 10, "business_process_step": "Review blocked expired or short-dated stock", "role": "Inventory Controller", "gateway_next_step": [{"condition": "Continue", "next_step": "Reconcile lot traceability and rotation compliance"}], "mappings": [{"category": "CGS Scenarios", "name": "EWM Batch Status change Process", "type": "Scenario - Standard", "rationale": "The scenario directly supports batch status changes after batch selection for blocked or unusable inventory.", "product": "On Premise", "source_ref": "S1 > Scenarios > Supply Chain / Warehousing", "link": "https://ts.accenture.com/sites/CGSandRetailMyConcertoP4BArchive/Shared Documents/Forms/AllItems.aspx?RootFolder=/sites%2FCGSandRetailMyConcertoP4BArchive%2FShared%20Documents%2FGeneral%2FRefreshed%20Integrated%20CGS%20Documents%2FSupply%20Chain%2FWarehousing%2FEWM%20Batch%20Status%20change%20Process&View=%7BD93BB2C7%2DA03F%2D4935%2DAEEC%2DA52D57EFE78D%7D", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "Traceability time (hours to trace batch)"}, {"name": "Batch determination accuracy (%)"}, {"name": "Expired / blocked batch value"}, {"name": "Recall readiness score"}, {"name": "Warehouse order cycle time"}]}], "to_be": "Use EWM Batch Status change Process to support review blocked expired or short-dated stock.", "process_impact": {"cost": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cost improvement within the mapped boundary."}, "cycle_time": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cycle time improvement within the mapped boundary."}, "experience": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative experience improvement within the mapped boundary."}, "productivity": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative productivity improvement within the mapped boundary."}, "risk": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative risk improvement within the mapped boundary."}}}, {"step_no": 11, "business_process_step": "Reconcile lot traceability and rotation compliance", "role": "Warehouse Inventory Manager", "gateway_next_step": [{"condition": "Continue", "next_step": "End"}], "mappings": [{"category": "CGS Scenarios", "name": "Physical Inventory using Batch and Serial Number Management", "type": "Scenario - Standard", "rationale": "The scenario counts batch-managed stock, posts differences, and supports batch traceability analysis.", "product": "On Premise", "source_ref": "S1 > Scenarios > Sourcing and Procurement / Operational Procurement", "link": "https://ts.accenture.com/sites/CGSandRetailMyConcertoP4BArchive/Shared Documents/Forms/AllItems.aspx?RootFolder=/sites%2FCGSandRetailMyConcertoP4BArchive%2FShared%20Documents%2FGeneral%2FRefreshed%20Integrated%20CGS%20Documents%2FSourcing%20and%20Procurement%2FOperational%20Procurement%2FPhysical%20Inventory%20using%20Batch%20and%20Serial%20Number%20Management&View=%7BD93BB2C7%2DA03F%2D4935%2DAEEC%2DA52D57EFE78D%7D", "challenge": "-", "value": "-", "benefits": [], "kpis": [{"name": "Inventory record accuracy (%)"}, {"name": "Inventory turns"}, {"name": "Stock write-off / scrap value"}, {"name": "Goods movement posting errors"}, {"name": "Procure-to-pay cycle time"}]}], "to_be": "Use Physical Inventory using Batch and Serial Number Management to support reconcile lot traceability and rotation compliance.", "process_impact": {"cost": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cost improvement within the mapped boundary."}, "cycle_time": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative cycle time improvement within the mapped boundary."}, "experience": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative experience improvement within the mapped boundary."}, "productivity": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative productivity improvement within the mapped boundary."}, "risk": {"qualitative_rating": "Medium", "description": "The reimagined task provides a qualitative risk improvement within the mapped boundary."}}}], "diagram": {"pool_name": "Manage code date / lot code tracking and rotation", "lanes": [{"lane_id": "lane1", "lane_name": "Warehouse Inventory Manager"}, {"lane_id": "lane2", "lane_name": "Master Data Specialist"}, {"lane_id": "lane3", "lane_name": "Warehouse Receiving Clerk"}, {"lane_id": "lane4", "lane_name": "Quality Technician"}, {"lane_id": "lane5", "lane_name": "Warehouse Operator"}, {"lane_id": "lane6", "lane_name": "Inventory Controller"}], "elements": [{"id": "S1", "kind": "event-start", "label": "Inventory tracking need identified", "lane_id": "lane1", "column": 0, "role": "Warehouse Inventory Manager"}, {"id": "T1", "kind": "task", "label": "Define code date and lot tracking requirements", "lane_id": "lane1", "column": 1, "role": "Warehouse Inventory Manager", "ai_category": "Whitespace", "ai_label": "Custom build"}, {"id": "T2", "kind": "task", "label": "Maintain material shelf-life and batch master data", "lane_id": "lane2", "column": 2, "role": "Master Data Specialist", "ai_category": "Whitespace", "ai_label": "Custom build"}, {"id": "T3", "kind": "task", "label": "Capture supplier lot and code date at goods receipt", "lane_id": "lane3", "column": 3, "role": "Warehouse Receiving Clerk", "ai_category": "CGS Scenarios", "ai_label": "EWM Integration- Batch Manag"}, {"id": "T4", "kind": "task", "label": "Validate remaining shelf life and lot attributes", "lane_id": "lane4", "column": 4, "role": "Quality Technician", "ai_category": "CGS Scenarios", "ai_label": "Shelf life Inspection"}, {"id": "T5", "kind": "task", "label": "Create and label warehouse batch stock", "lane_id": "lane3", "column": 5, "role": "Warehouse Receiving Clerk", "ai_category": "CGS Scenarios", "ai_label": "EWM Integration- Batch Manag"}, {"id": "T6", "kind": "task", "label": "Put away stock by lot and expiration date", "lane_id": "lane5", "column": 6, "role": "Warehouse Operator", "ai_category": "SAP Business AI", "ai_label": "Confirm warehouse task"}, {"id": "T7", "kind": "task", "label": "Monitor aging inventory and shelf-life exceptions", "lane_id": "lane6", "column": 7, "role": "Inventory Controller", "ai_category": "CGS Scenarios", "ai_label": "Shelf life Inspection"}, {"id": "T8", "kind": "task", "label": "Prioritize lots using FEFO or FIFO rotation", "lane_id": "lane1", "column": 8, "role": "Warehouse Inventory Manager", "ai_category": "CGS Scenarios", "ai_label": "EWM Batch Determination and "}, {"id": "T9", "kind": "task", "label": "Pick and confirm the selected lot for outbound delivery", "lane_id": "lane5", "column": 9, "role": "Warehouse Operator", "ai_category": "SAP Business AI", "ai_label": "Confirm warehouse task"}, {"id": "T10", "kind": "task", "label": "Review blocked expired or short-dated stock", "lane_id": "lane6", "column": 10, "role": "Inventory Controller", "ai_category": "CGS Scenarios", "ai_label": "EWM Batch Status change Proc"}, {"id": "T11", "kind": "task", "label": "Reconcile lot traceability and rotation compliance", "lane_id": "lane1", "column": 11, "role": "Warehouse Inventory Manager", "ai_category": "CGS Scenarios", "ai_label": "Physical Inventory using Bat"}, {"id": "E1", "kind": "event-end", "label": "Lot rotation and traceability reviewed", "lane_id": "lane1", "column": 12, "role": "Warehouse Inventory Manager"}], "connections": [{"from": "S1", "to": "T1", "label": ""}, {"from": "T1", "to": "T2", "label": ""}, {"from": "T2", "to": "T3", "label": ""}, {"from": "T3", "to": "T4", "label": ""}, {"from": "T4", "to": "T5", "label": ""}, {"from": "T5", "to": "T6", "label": ""}, {"from": "T6", "to": "T7", "label": ""}, {"from": "T7", "to": "T8", "label": ""}, {"from": "T8", "to": "T9", "label": ""}, {"from": "T9", "to": "T10", "label": ""}, {"from": "T10", "to": "T11", "label": ""}, {"from": "T11", "to": "E1", "label": ""}]}}, "overall_summary": {"headline": "Reimagine code-date and lot rotation with source-grounded batch, shelf-life, warehouse-task, and traceability capabilities.", "category_split": {"CGS Scenarios": 63.64, "Accenture Gen AI": 0, "BPA Bots": 0, "SAP Business AI": 18.18, "Whitespace": 18.18}, "value_potential": [{"value_dimension": "Productivity", "qualitative_rating": "Medium", "description": "Roles spend less effort locating batch, date, task, and status information."}, {"value_dimension": "Cycle Time Reduction", "qualitative_rating": "Medium", "description": "Putaway, picking, inspection, and exception handoffs use clearer lot context."}, {"value_dimension": "Cost Reduction", "qualitative_rating": "Low", "description": "Improved identification can limit avoidable rework within mapped activities."}, {"value_dimension": "Risk Reduction", "qualitative_rating": "High", "description": "Consistent identity, shelf-life review, status, and traceability strengthen inventory control."}, {"value_dimension": "User Experience", "qualitative_rating": "Medium", "description": "Warehouse roles receive focused batch information at operational decisions."}], "kpis_benchmarks": [{"kpi": "Traceability time (hours to trace batch)"}, {"kpi": "Batch determination accuracy (%)"}, {"kpi": "Expired / blocked batch value"}, {"kpi": "Inventory record accuracy (%)"}, {"kpi": "Order/warehouse task cycle-time reduction (%)"}], "personas_impacted": ["Warehouse Inventory Manager", "Master Data Specialist", "Warehouse Receiving Clerk", "Quality Technician", "Warehouse Operator", "Inventory Controller"], "whitespace_opportunities": ["Define and approve code-date, lot-code, shelf-life, and rotation policies.", "Validate combined material shelf-life and batch master data."], "recommendations": ["Confirm the target SAP S/4HANA and EWM deployment.", "Prioritize inbound capture, shelf-life validation, FEFO determination, and outbound confirmation as one traceability chain.", "Define ownership for code-date policy and shelf-life master data."]}};</script>
+<script>
+(function(){
+  var D=window.__REIMAGINE_DATA__||{};
+  var M=D.meta||{},CPO=D.current_process_overview||{},AD=D.agentic_discovery||{},
+      RP=D.reimagine_process_flow||{},OS=D.overall_summary||{};
+  var CATS=["CGS Scenarios","Accenture Gen AI","BPA Bots","SAP Business AI","Whitespace"];
+  var CLS={"CGS Scenarios":"cat--cgs","Accenture Gen AI":"cat--gen","BPA Bots":"cat--bpa","SAP Business AI":"cat--sap","Whitespace":"cat--ws"};
+  var BAR={"CGS Scenarios":"#a100ff","Accenture Gen AI":"#1d4ed8","BPA Bots":"#0d7a53","SAP Business AI":"#f97316","Whitespace":"#e8a800"};
+  function catLabel(c){return c==="CGS Scenarios"?"CGS Solution":c;}
+  function isDemoGenAI(m){return !m||m.category!=="Accenture Gen AI"||/demo/i.test(String(m.type||""));}
+  function visibleMappings(r){return ((r&&r.mappings)||[]).filter(function(m){return m&&isDemoGenAI(m);});}
+  function normRationale(v){return String(v||"").toLowerCase().replace(/\s+/g," ").trim();}  
+  var GENERIC_RATIONALES={  
+    "directly supports the task action or business object described in the cited source capability.":1,  
+    "supports automation.":1,  
+    "mapped enabler for this process step.":1  
+  };  
+  function buildRationaleIndex(){var idx={};  
+    [AD.business_process_table||[],RP.business_process_table||[]].forEach(function(tbl){tbl.forEach(function(r){  
+      visibleMappings(r).forEach(function(m){var k=normRationale(m.rationale);if(!k)return;idx[k]=idx[k]||{};  
+        idx[k][String(r.step_no)+"||"+String(m.name||"")]=1;});});});return idx;}  
+  var RATIONALE_INDEX=buildRationaleIndex();  
+  function rationaleFor(row,m){var raw=String((m&&m.rationale)||"").trim(),k=normRationale(raw),uses=k&&RATIONALE_INDEX[k]?Object.keys(RATIONALE_INDEX[k]).length:0;  
+    if(!raw||GENERIC_RATIONALES[k]||uses>1)return "Task-specific rationale missing for "+String((m&&m.name)||"this solution")+" at "+String((row&&row.business_process_step)||"this process step")+". Regenerate REPORT_JSON with direct source evidence.";  
+    return raw;}  
+  window.__rationaleFor=rationaleFor;  
+  function rowForStep(tbl,n){var z=null;(tbl||[]).forEach(function(r){if(String(r.step_no)===String(n))z=r;});return z;}
+  function hasQualifiedMapping(n){var r=rowForStep((RP.business_process_table&&RP.business_process_table.length)?RP.business_process_table:AD.business_process_table,n);return visibleMappings(r).some(function(m){return m.category!=="Whitespace"&&m.name&&m.name!=="—";});}
+  function e(s){return s==null?"":String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+  function d(v){return (v===null||v===undefined||v==="")?"—":e(v);}
+  function gw(a){if(!a||!a.length)return "—";return a.map(function(x){return e((x.condition?x.condition+": ":"")+(x.next_step||""));}).join("<br/>");}
+  function csv(rows,name){var a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([rows.map(function(r){return r.map(function(v){return '"'+String(v==null?"":v).replace(/"/g,'""')+'"';}).join(",");}).join("\n")],{type:"text/csv"}));
+    a.download=name;a.click();}
+
+  /* ================= SWIMLANE RENDERER =================
+     Input: {pool_name, lanes:[{lane_id,lane_name}],
+             elements:[{id,kind,label,lane_id,column,ai_category,ai_label}],
+             connections:[{from,to,label}]}                       */
+  var STRIP=34,COLW=200,ROWH=110,TW=140,TH=64,GW=44,EV=34,PADT=14;
+  var ROUTE_CACHE={};
+  function render(dg,opts){
+    opts=opts||{};
+    if(!dg||!(dg.elements||[]).length||!(dg.lanes||[]).length)return '<div class="dgrm__empty">No diagram model available.</div>';
+    var lanes=dg.lanes,els=dg.elements.map(function(x){var o={};for(var k in x)o[k]=x[k];return o;}),cons=(dg.connections||[]).filter(function(c){return c&&c.from&&c.to;});
+    var byId={};els.forEach(function(x){byId[x.id]=x;});
+    var li={};lanes.forEach(function(l,i){li[l.lane_id]=i;});
+    /* --- column auto-assign (longest path) --- */
+    var need=els.some(function(x){return x.column===undefined||x.column===null;});
+    if(need){
+      var adj={},ind={};els.forEach(function(x){adj[x.id]=[];ind[x.id]=0;});
+      cons.forEach(function(c){if(adj[c.from]&&byId[c.to]){adj[c.from].push(c.to);ind[c.to]++;}});
+      var col={},q=[];els.forEach(function(x){col[x.id]=0;if(!ind[x.id])q.push(x.id);});
+      if(!q.length)q.push(els[0].id);
+      var gu=0;
+      while(q.length&&gu++<9999){var n=q.shift();adj[n].forEach(function(m){
+        if(col[m]<col[n]+1)col[m]=col[n]+1;if(--ind[m]<=0)q.push(m);});}
+      els.forEach(function(x){if(x.column===undefined||x.column===null)x.column=col[x.id]||0;});
+    }
+    /* --- v4.6 flow-order column normalization ---
+       Every non-loop connection must move strictly left-to-right. Loop and
+       rework edges (DFS back-edges) are the only connections allowed to run
+       backward. Columns taken from an image's visual x-position that would
+       create a backward or same-column hop are pushed right, preserving
+       the supplied order wherever it is already valid.                   */
+    (function(){
+      var out={},st={},back={};
+      els.forEach(function(x){out[x.id]=[];});
+      cons.forEach(function(c){if(out[c.from]&&byId[c.to])out[c.from].push(c);});
+      var roots=els.filter(function(x){return x.kind==="event-start";})
+        .concat(els.slice().sort(function(a,b){return (a.column||0)-(b.column||0);}));
+      function dfs(v){st[v]=1;out[v].forEach(function(c){
+        if(st[c.to]===1)back[c.from+">"+c.to]=1;else if(!st[c.to])dfs(c.to);});st[v]=2;}
+      roots.forEach(function(x){if(!st[x.id])dfs(x.id);});
+      var ind={},q=[],col={};
+      els.forEach(function(x){ind[x.id]=0;col[x.id]=x.column||0;});
+      cons.forEach(function(c){if(out[c.from]&&byId[c.to]&&!back[c.from+">"+c.to])ind[c.to]++;});
+      els.forEach(function(x){if(!ind[x.id])q.push(x.id);});
+      var gd=0;
+      while(q.length&&gd++<99999){var n=q.shift();
+        out[n].forEach(function(c){if(back[c.from+">"+c.to])return;
+          if(col[c.to]<col[n]+1)col[c.to]=col[n]+1;
+          if(--ind[c.to]===0)q.push(c.to);});}
+      els.forEach(function(x){x.column=col[x.id];});
+    })();
+    /* --- sub-rows inside a lane for same column --- */
+    var seen={},sub={},maxSub={};
+    els.forEach(function(x){var L=li[x.lane_id]||0,k=L+"|"+x.column;
+      sub[x.id]=seen[k]===undefined?(seen[k]=0):(++seen[k]);
+      if((maxSub[L]||0)<sub[x.id])maxSub[L]=sub[x.id];});
+    var laneY=[],y=0;
+    lanes.forEach(function(l,i){var h=((maxSub[i]||0)+1)*ROWH+18;laneY.push({y:y,h:h});y+=h;});
+    var maxCol=0;els.forEach(function(x){if(x.column>maxCol)maxCol=x.column;});
+    var W=STRIP+(maxCol+1)*COLW+40,H=y+PADT+30;
+    var box={};
+    els.forEach(function(x){
+      var L=li[x.lane_id]||0,k=x.kind||"task",
+          w=(k==="gateway"?GW:(k==="event-start"||k==="event-end")?EV:TW),
+          h=(k==="gateway"?GW:(k==="event-start"||k==="event-end")?EV:TH),
+          cx=STRIP+x.column*COLW+COLW/2,
+          cy=PADT+laneY[L].y+sub[x.id]*ROWH+ROWH/2;
+      box[x.id]={x:cx-w/2,y:cy-h/2,w:w,h:h,cx:cx,cy:cy,el:x};});
+    var s='<defs><marker id="ah'+(opts.uid||"")+'" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 z" fill="#8d8d99"/></marker></defs>';
+    lanes.forEach(function(l,i){var b=laneY[i];
+      s+='<rect class="sw-lane'+(i%2?" sw-lane--alt":"")+'" x="'+STRIP+'" y="'+(PADT+b.y)+'" width="'+(W-STRIP-10)+'" height="'+b.h+'"/>';
+      s+='<rect class="sw-strip'+(i%2?" sw-strip--alt":"")+'" x="0" y="'+(PADT+b.y)+'" width="'+STRIP+'" height="'+b.h+'"/>';
+      /* lane caption must fit the lane height: shrink, then ellipsize */
+      var nm=String(l.lane_name||""),fs=11,cap=b.h-14;
+      if(nm.length*6.1>cap)fs=10;
+      if(nm.length*5.6>cap)fs=9;
+      var maxc=Math.floor(cap/(fs*0.56));
+      if(nm.length>maxc&&maxc>3)nm=nm.slice(0,maxc-1)+"\u2026";
+      s+='<text class="sw-striptxt" style="font-size:'+fs+'px" transform="translate('+(STRIP/2+4)+','+(PADT+b.y+b.h/2)+') rotate(-90)" text-anchor="middle"><title>'+e(l.lane_name||"")+'</title>'+e(nm)+'</text>';});
+    /* ---------- v4.6 COLLISION-AWARE ORTHOGONAL ROUTER ----------
+       Replaces the v4.5 fixed-corridor router. Every connector is chosen
+       from a set of orthogonal candidate routes (straight, L, Z through a
+       column gutter, Z through a lane channel, and 5-leg detours) and is
+       scored against:
+         - node obstacles (padded task boxes, gateways, events),
+         - gateway / event captions and already placed edge labels,
+         - every connector segment routed before it.
+       Re-using an occupied segment, running through a node, or doubling
+       back on itself is penalised so heavily that a free channel is
+       always preferred; when a gutter or channel is full the router moves
+       to the next free gutter or channel instead of compressing lines.
+       Port slots fan multiple connectors on the same box side.
+       Routes are cached per diagram geometry so As-Is, To-Be and the
+       compare view render identical connector paths.                    */
+    var R=7,STUB=12,PAD=6,poolBot=PADT+y,bandTop=poolBot+14;
+    var OBS=[];
+    els.forEach(function(x){var b=box[x.id],k=x.kind||"task";
+      OBS.push({x1:b.x-PAD,y1:b.y-PAD,x2:b.x+b.w+PAD,y2:b.y+b.h+PAD,id:x.id});
+      if(x.label&&(k==="gateway"||k==="event-start"||k==="event-end")){
+        var ls=wrap(x.label,k==="gateway"?26:18,3),mw=0;
+        ls.forEach(function(t){if(t.length>mw)mw=t.length;});
+        var hw=mw*2.75+4;
+        OBS.push({x1:b.cx-hw,y1:b.y+b.h+2,x2:b.cx+hw,y2:b.y+b.h+14+(ls.length-1)*10,id:x.id,soft:1});}});
+    /* candidate vertical gutters (column boundaries) */
+    var XS=[];
+    for(var cb=0;cb<=maxCol+1;cb++){var gb=STRIP+cb*COLW;
+      for(var kx=-3;kx<=3;kx++){var xv=gb+kx*8;if(xv>STRIP+3&&xv<W-4)XS.push(xv);}}
+    /* candidate horizontal channels (row gaps, lane boundaries, bands) */
+    var YS=[];
+    function addY(c,sp){for(var k=-sp;k<=sp;k++)YS.push(c+k*8);}
+    lanes.forEach(function(l,i){var top=PADT+laneY[i].y,rows=(maxSub[i]||0)+1;
+      if(i===0)addY(top+11,1);
+      for(var r=1;r<rows;r++)addY(top+r*ROWH,2);
+      if(i===lanes.length-1)addY(top+laneY[i].h-20,2);else addY(top+laneY[i].h-9,3);});
+    for(var kb=0;kb<10;kb++)YS.push(bandTop+kb*12);
+    var SEG=[],LBL=[],maxX=W,maxY=H;
+    function mk(a,b){return{x1:Math.min(a[0],b[0]),x2:Math.max(a[0],b[0]),
+      y1:Math.min(a[1],b[1]),y2:Math.max(a[1],b[1]),h:a[1]===b[1]};}
+    /* remove duplicates and collinear points; flag a doubled-back route */
+    function simp(p){var o=[p[0]],bad=false;
+      for(var i=1;i<p.length;i++){var q=p[i],l=o[o.length-1];
+        if(q[0]===l[0]&&q[1]===l[1])continue;
+        if(o.length>1){var m=o[o.length-2];
+          var col=(m[0]===l[0]&&l[0]===q[0])||(m[1]===l[1]&&l[1]===q[1]);
+          if(col){var rev=(m[0]===l[0])?((l[1]-m[1])*(q[1]-l[1])<0):((l[0]-m[0])*(q[0]-l[0])<0);
+            if(rev)bad=true;o[o.length-1]=q;continue;}}
+        if(q[0]!==l[0]&&q[1]!==l[1])bad=true;
+        o.push(q);}
+      return{p:o,bad:bad};}
+    function hit(s,r){return s.x2>r.x1&&s.x1<r.x2&&s.y2>r.y1&&s.y1<r.y2;}
+    function cost(pts,c,pref,best){
+      var sp=simp(pts);if(sp.bad)return{v:1e9};
+      var p=sp.p,v=pref+(p.length-2)*25,i,j;
+      for(i=0;i<p.length-1;i++)v+=(Math.abs(p[i+1][0]-p[i][0])+Math.abs(p[i+1][1]-p[i][1]))*0.04;
+      if(v>best)return{v:v};
+      var ss=[];for(i=0;i<p.length-1;i++)ss.push(mk(p[i],p[i+1]));
+      var last=ss.length-1;
+      for(i=0;i<ss.length;i++){var s=ss[i];
+        if(s.x1<STRIP+2)v+=1e5;
+        if(s.y1>poolBot)v+=150;
+        for(j=0;j<OBS.length;j++){var o=OBS[j];
+          if(!o.soft&&((i===0&&o.id===c.from)||(i===last&&o.id===c.to)))continue;
+          if(o.soft&&((i===0&&o.id===c.from)||(i===last&&o.id===c.to)))continue;
+          if(hit(s,o))v+=o.soft?4000:1e5;}
+        for(j=0;j<LBL.length;j++)if(hit(s,LBL[j]))v+=3000;
+        if(v>best)return{v:v};
+        for(j=0;j<SEG.length;j++){var q=SEG[j];
+          if(s.h===q.h){
+            if(s.h){var dy=Math.abs(s.y1-q.y1),ov=Math.min(s.x2,q.x2)-Math.max(s.x1,q.x1);
+              if(ov>1){if(dy<4)v+=3e4;else if(dy<9)v+=400;}}
+            else{var dx=Math.abs(s.x1-q.x1),ov2=Math.min(s.y2,q.y2)-Math.max(s.y1,q.y1);
+              if(ov2>1){if(dx<4)v+=3e4;else if(dx<9)v+=400;}}}
+          else{var hs=s.h?s:q,vs=s.h?q:s;
+            if(vs.x1>hs.x1&&vs.x1<hs.x2&&hs.y1>vs.y1&&hs.y1<vs.y2)v+=60;}}
+        if(v>best)return{v:v};}
+      return{v:v,p:p,ss:ss};}
+    var DIR={r:[1,0],l:[-1,0],t:[0,-1],b:[0,1]};
+    var SLOT={},FAN_LR=[0,10,-10,20,-20,26,-26],FAN_TB=[0,14,-14,28,-28,42,-42,56,-56];
+    function portOf(bx,side){var n=SLOT[bx.el.id+side]||0,task=(bx.el.kind||"task")==="task",off=0;
+      if(task)off=(side==="l"||side==="r")?FAN_LR[n%FAN_LR.length]:FAN_TB[n%FAN_TB.length];
+      if(side==="r")return[bx.x+bx.w,bx.cy+off];
+      if(side==="l")return[bx.x,bx.cy+off];
+      if(side==="t")return[bx.cx+off,bx.y];
+      return[bx.cx+off,bx.y+bx.h];}
+    function near(list,v,n){return list.slice().sort(function(a,b){return Math.abs(a-v)-Math.abs(b-v);}).slice(0,n);}
+    function route(c,A,B){
+      var fwd=B.cx>A.cx+1,same=Math.abs(B.cx-A.cx)<=1,down=B.cy>A.cy;
+      var SA=["r","b","t","l"],SB=["l","t","b","r"],combos=[];
+      SA.forEach(function(a){SB.forEach(function(b){var pr=0;
+        if(fwd){if(a!=="r")pr+=40;if(b!=="l")pr+=40;}
+        else if(same){if(a!==(down?"b":"t")&&a!=="r")pr+=40;if(b!==(down?"t":"b")&&b!=="r")pr+=40;}
+        else{if(a!=="r"&&a!=="b")pr+=30;if(b!=="l"&&b!=="b")pr+=30;}
+        combos.push({a:a,b:b,pr:pr});});});
+      var best={v:1e12},scored=[];
+      combos.forEach(function(cm){
+        var S=portOf(A,cm.a),E=portOf(B,cm.b),dS=DIR[cm.a],dE=DIR[cm.b];
+        var S1=[S[0]+dS[0]*STUB,S[1]+dS[1]*STUB],E1=[E[0]+dE[0]*STUB,E[1]+dE[1]*STUB];
+        var mids=[[],[[S1[0],E1[1]]],[[E1[0],S1[1]]]];
+        XS.forEach(function(gx){mids.push([[gx,S1[1]],[gx,E1[1]]]);});
+        YS.forEach(function(gy){mids.push([[S1[0],gy],[E1[0],gy]]);});
+        var lb={v:1e12};
+        mids.forEach(function(m){var r=cost([S,S1].concat(m,[E1,E]),c,cm.pr,best.v);
+          if(r.p&&r.v<best.v){best=r;best.cm=cm;}if(r.v<lb.v)lb=r;});
+        scored.push({cm:cm,S:S,E:E,S1:S1,E1:E1,v:lb.v});});
+      if(best.v>=1e4){               /* stage 2: 5-leg detours on the 4 best port pairs */
+        scored.sort(function(a,b){return a.v-b.v;});
+        scored.slice(0,4).forEach(function(z){
+          var gx1=near(XS,z.S1[0],14),gx2=near(XS,z.E1[0],14);
+          var yr=YS.filter(function(gy){return gy>Math.min(z.S1[1],z.E1[1])-160&&gy<Math.max(z.S1[1],z.E1[1])+160||gy>poolBot;});
+          gx1.forEach(function(a){gx2.forEach(function(b){yr.forEach(function(gy){
+            var r=cost([z.S,z.S1,[a,z.S1[1]],[a,gy],[b,gy],[b,z.E1[1]],z.E1,z.E],c,z.cm.pr+60,best.v);
+            if(r.p&&r.v<best.v){best=r;best.cm=z.cm;}});});});
+          var gy1=near(YS,z.S1[1],6),gy2=near(YS,z.E1[1],6);
+          gy1.forEach(function(a){gy2.forEach(function(b){XS.forEach(function(gx){
+            var r=cost([z.S,z.S1,[z.S1[0],a],[gx,a],[gx,b],[z.E1[0],b],z.E1,z.E],c,z.cm.pr+60,best.v);
+            if(r.p&&r.v<best.v){best=r;best.cm=z.cm;}});});});});}
+      if(!best.p){var S0=portOf(A,"r"),E0=portOf(B,"l");best={p:[S0,[S0[0]+STUB,S0[1]],[S0[0]+STUB,E0[1]],E0],cm:{a:"r",b:"l"}};
+        best.ss=[];for(var q=0;q<best.p.length-1;q++)best.ss.push(mk(best.p[q],best.p[q+1]));}
+      SLOT[A.el.id+best.cm.a]=(SLOT[A.el.id+best.cm.a]||0)+1;
+      SLOT[B.el.id+best.cm.b]=(SLOT[B.el.id+best.cm.b]||0)+1;
+      return best;}
+    /* path builder with rounded corners from a list of points */
+    function poly(pts){
+      var o="M"+pts[0][0]+","+pts[0][1];
+      for(var i=1;i<pts.length-1;i++){
+        var pv=pts[i-1],cu=pts[i],nx=pts[i+1];
+        var d1x=Math.sign(cu[0]-pv[0]),d1y=Math.sign(cu[1]-pv[1]);
+        var d2x=Math.sign(nx[0]-cu[0]),d2y=Math.sign(nx[1]-cu[1]);
+        var r=Math.min(R,Math.abs(cu[0]-pv[0])/2||R,Math.abs(cu[1]-pv[1])/2||R,
+                         Math.abs(nx[0]-cu[0])/2||R,Math.abs(nx[1]-cu[1])/2||R);
+        if(!r||(d1x===d2x&&d1y===d2y)){o+=" L"+cu[0]+","+cu[1];continue;}
+        o+=" L"+(cu[0]-d1x*r)+","+(cu[1]-d1y*r)+
+           " Q"+cu[0]+","+cu[1]+" "+(cu[0]+d2x*r)+","+(cu[1]+d2y*r);}
+      var l=pts[pts.length-1];return o+" L"+l[0]+","+l[1];}
+    /* place a connector label on a free stretch of its own route */
+    function labelAt(c,p,fromGw){var w=String(c.label).length*5+8,ss=[],i;
+      for(i=0;i<p.length-1;i++)ss.push({a:p[i],b:p[i+1],len:Math.abs(p[i+1][0]-p[i][0])+Math.abs(p[i+1][1]-p[i][1])});
+      var pick=null;
+      if(fromGw){for(i=0;i<ss.length;i++)if(ss[i].len>=24&&i>0){pick=ss[i];break;}}
+      if(!pick)ss.forEach(function(s){if(!pick||s.len>pick.len)pick=s;});
+      var hz=pick.a[1]===pick.b[1],lx,ly,anc,rc;
+      if(hz){lx=(pick.a[0]+pick.b[0])/2;ly=pick.a[1]-4;anc="middle";rc={x1:lx-w/2,y1:ly-9,x2:lx+w/2,y2:ly+2};}
+      else{lx=pick.a[0]+5;ly=(pick.a[1]+pick.b[1])/2+3;anc="start";rc={x1:lx,y1:ly-9,x2:lx+w,y2:ly+2};}
+      LBL.push(rc);return{x:lx,y:ly,anc:anc};}
+    var RKEY=JSON.stringify([lanes.map(function(l){return l.lane_id;}),
+      els.map(function(x){return[x.id,x.kind,x.lane_id,x.column,x.label];}),
+      cons.map(function(c){return[c.from,c.to,c.label||""];})]);
+    var cached=ROUTE_CACHE[RKEY];
+    /* short, simple hops first so they claim the direct channels */
+    var order=cons.map(function(c,i){var A=box[c.from],B=box[c.to],d=1e9;
+      if(A&&B)d=Math.abs(B.cx-A.cx)+Math.abs(B.cy-A.cy)+(B.cx<A.cx-1?4000:0)+(A===B?9000:0);
+      return{c:c,i:i,d:d};}).sort(function(a,b){return a.d-b.d||a.i-b.i;});
+    var drawn=cached||[];
+    if(!cached){order.forEach(function(o){var c=o.c,A=box[c.from],B=box[c.to];if(!A||!B)return;
+      var pts;
+      if(A===B){var t=portOf(A,"t"),rr=portOf(A,"r");
+        pts=[[t[0],t[1]],[t[0],t[1]-20],[rr[0]+26,t[1]-20],[rr[0]+26,rr[1]],[rr[0],rr[1]]];}
+      else pts=route(c,A,B).p;
+      for(var q=0;q<pts.length-1;q++){var sg=mk(pts[q],pts[q+1]);sg.from=c.from;sg.to=c.to;SEG.push(sg);}
+      var lab=c.label?labelAt(c,pts,(A.el.kind==="gateway")):null;
+      drawn.push({c:c,p:pts,lab:lab});});
+      ROUTE_CACHE[RKEY]=drawn;}
+    drawn.forEach(function(dw){
+      dw.p.forEach(function(pt){if(pt[0]+20>maxX)maxX=pt[0]+20;if(pt[1]+16>maxY)maxY=pt[1]+16;});
+      s+='<path class="sw-flow" d="'+poly(dw.p)+'" marker-end="url(#ah'+(opts.uid||"")+')"/>';
+      if(dw.lab)s+='<text class="sw-lbl" x="'+dw.lab.x+'" y="'+dw.lab.y+'" text-anchor="'+dw.lab.anc+'">'+e(dw.c.label)+'</text>';});
+    H=Math.max(H,maxY);
+    function wrap(t,n,ml){t=String(t||"").trim();ml=ml||3;
+      var w=t.split(/\s+/),o=[],c="";
+      w.forEach(function(x){
+        while(x.length>n){if(c){o.push(c);c="";}o.push(x.slice(0,n-1)+"\u2010");x=x.slice(n-1);}
+        if((c+" "+x).trim().length>n){if(c)o.push(c);c=x;}else c=(c?c+" ":"")+x;});
+      if(c)o.push(c);
+      if(o.length>ml){o=o.slice(0,ml);o[ml-1]=o[ml-1].slice(0,Math.max(1,n-1))+"\u2026";}
+      return o;}
+    els.forEach(function(x){var b=box[x.id],k=x.kind||"task";
+      if(k==="gateway"){
+        s+='<path class="sw-gw" d="M'+b.cx+','+b.y+' L'+(b.x+b.w)+','+b.cy+' L'+b.cx+','+(b.y+b.h)+' L'+b.x+','+b.cy+' z"/>';
+        s+='<text class="sw-txt" x="'+b.cx+'" y="'+(b.cy+3.5)+'" text-anchor="middle" style="font-size:12px;fill:#c2410c">'+(x.gateway_type==="parallel"?"+":x.gateway_type==="inclusive"?"O":"X")+'</text>';
+        if(x.label)wrap(x.label,26,3).forEach(function(t,i){
+          s+='<text class="sw-cap" x="'+b.cx+'" y="'+(b.y+b.h+11+i*10)+'" text-anchor="middle"><title>'+e(x.label)+'</title>'+e(t)+'</text>';});}
+      else if(k==="event-start"||k==="event-end"){
+        s+='<circle class="sw-ev'+(k==="event-end"?" sw-ev--end":"")+'" cx="'+b.cx+'" cy="'+b.cy+'" r="'+(b.w/2)+'"/>';
+        wrap(x.label,18,3).forEach(function(t,i){s+='<text class="sw-cap" x="'+b.cx+'" y="'+(b.y+b.h+11+i*10)+'" text-anchor="middle"><title>'+e(x.label)+'</title>'+e(t)+'</text>';});}
+      else{
+        var cl=x.ai_category?(x.ai_category==="Whitespace"?"sw-task--ws":"sw-task--ai"):"";
+        var hit=opts.click?'<g class="sw-node" data-node="'+e(x.id)+'">':"";
+        s+=hit;
+        var boxCol=x.ai_category?(BAR[x.ai_category]||"#7C00D4"):"#8d8d99",boxFill=x.ai_category==="Whitespace"?"#fffbee":"#ffffff";
+        s+='<rect class="sw-task '+cl+'" x="'+b.x+'" y="'+b.y+'" width="'+b.w+'" height="'+b.h+'" rx="7" fill="'+boxFill+'" stroke="'+boxCol+'" style="stroke-width:'+(x.ai_category==="Whitespace"?"1.6":"1.9")+'px"/>';
+        var ls=wrap(x.label,20),y0=b.cy-(ls.length-1)*5.5-(x.ai_category?5:0);
+        ls.forEach(function(t,i){s+='<text class="sw-txt" x="'+b.cx+'" y="'+(y0+i*11+3)+'" text-anchor="middle">'+e(t)+'</text>';});
+        if(x.ai_category){var col=BAR[x.ai_category]||"#7C00D4";
+          s+='<rect x="'+(b.x+5)+'" y="'+(b.y+b.h-16)+'" width="'+(b.w-10)+'" height="12" rx="6" fill="'+col+'" opacity="0.13"/>';
+          s+='<text class="sw-ann" x="'+b.cx+'" y="'+(b.y+b.h-6.5)+'" text-anchor="middle" fill="'+col+'">'+e(String(x.ai_label||x.ai_category).slice(0,28))+'</text>';}
+        if(opts.click){
+          s+='<circle cx="'+(b.x+b.w-11)+'" cy="'+(b.y+10)+'" r="6" fill="#7C00D4" opacity=".12"/>';
+          s+='<text class="sw-badge-i" x="'+(b.x+b.w-11)+'" y="'+(b.y+13)+'" text-anchor="middle">i</text>';
+          s+='<rect class="sw-hot" x="'+b.x+'" y="'+b.y+'" width="'+b.w+'" height="'+b.h+'" rx="7"/></g>';}}});
+    s='<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg">'+s;
+    var lg=opts.legend?'<div class="dgrm__lg">'+opts.legend+'</div>':'';
+    var uid=opts.uid||"d";
+    var zm='<div class="dgrm__zoom">'+
+      '<button type="button" class="dgrm__zbtn" data-z="out" title="Zoom out">&minus;</button>'+
+      '<span class="dgrm__zlvl" id="zl_'+uid+'">100%</span>'+
+      '<button type="button" class="dgrm__zbtn" data-z="in" title="Zoom in">+</button>'+
+      '<button type="button" class="dgrm__zbtn dgrm__zbtn--wide" data-z="fit" title="Fit to width">Fit</button>'+
+      '<button type="button" class="dgrm__zbtn dgrm__zbtn--wide" data-z="reset" title="Actual size">100%</button>'+
+      '<button type="button" class="dgrm__zbtn dgrm__zbtn--wide" data-z="full" title="Full screen">Full</button>'+
+      '</div><span class="dgrm__hint">Ctrl+scroll to zoom &middot; drag to pan'+(opts.click?' &middot; click a step for details':'')+'</span>';
+    return '<div class="dgrm" id="dg_'+uid+'" data-w="'+W+'" data-h="'+H+'"><div class="dgrm__bar"><span class="dgrm__pool">'+e(dg.pool_name||M.process_name||"Process")+'</span>'+zm+lg+
+           '</div><div class="dgrm__scroll">'+s+'</svg></div></div>';
+  }
+
+  /* ================= ZOOM / PAN BINDING =================
+     Registry keeps one controller per diagram so a tab that was
+     hidden at bind time (clientWidth 0) can be re-fitted the moment
+     it becomes visible. Without this the To-Be flow opened at 100%. */
+  var ZOOM={};
+  function bindZoom(uid){
+    var box=document.getElementById("dg_"+uid);if(!box)return;
+    var scroll=box.querySelector(".dgrm__scroll"),svg=box.querySelector("svg"),
+        lvl=box.querySelector(".dgrm__zlvl");
+    if(!scroll||!svg)return;
+    var W=+box.getAttribute("data-w")||1,H=+box.getAttribute("data-h")||1,z=1,fitted=false;
+    function apply(){
+      z=Math.max(.2,Math.min(4,z));
+      svg.setAttribute("width",Math.round(W*z));svg.setAttribute("height",Math.round(H*z));
+      if(lvl)lvl.textContent=Math.round(z*100)+"%";}
+    var lastFitW=0;
+    function avail(){
+      /* real width when visible; estimate from an ancestor while hidden */
+      var w=scroll.clientWidth,est=false;
+      if(w<40){est=true;var n=box;while(n&&n!==document.body){if(n.offsetWidth>40){w=n.offsetWidth;break;}n=n.parentNode;}}
+      if(w<40)w=(document.querySelector(".rpf-shell")||{}).clientWidth||1200;
+      return{w:w-26,est:est};}
+    function fit(){var a=avail();if(a.w>60){z=Math.min(1,a.w/W);apply();fitted=true;lastFitW=a.est?0:a.w;}}
+    function zoomAt(f,cx,cy){
+      var oz=z;z=Math.max(.2,Math.min(4,z*f));if(z===oz)return;
+      var rx=(scroll.scrollLeft+cx)/oz,ry=(scroll.scrollTop+cy)/oz;
+      apply();scroll.scrollLeft=rx*z-cx;scroll.scrollTop=ry*z-cy;}
+    [].forEach.call(box.querySelectorAll("[data-z]"),function(b){
+      b.onclick=function(ev){ev.stopPropagation();
+        var a=b.getAttribute("data-z"),r=scroll.getBoundingClientRect();
+        if(a==="in")zoomAt(1.25,r.width/2,r.height/2);
+        else if(a==="out")zoomAt(.8,r.width/2,r.height/2);
+        else if(a==="reset"){z=1;apply();}
+        else if(a==="fit")fit();
+        else if(a==="full"){
+          if(document.fullscreenElement)document.exitFullscreen();
+          else if(box.requestFullscreen)box.requestFullscreen();}};});
+    /* ctrl/cmd + wheel zooms toward the pointer; plain wheel scrolls */
+    scroll.addEventListener("wheel",function(ev){
+      if(!ev.ctrlKey&&!ev.metaKey)return;ev.preventDefault();
+      var r=scroll.getBoundingClientRect();
+      zoomAt(ev.deltaY<0?1.12:.89,ev.clientX-r.left,ev.clientY-r.top);},{passive:false});
+    /* drag to pan (ignored when the press starts on a clickable node) */
+    var pan=false,px=0,py=0,sl=0,st=0,moved=0;
+    scroll.addEventListener("mousedown",function(ev){
+      if(ev.button!==0)return;
+      if(ev.target.closest&&ev.target.closest(".sw-node"))return;
+      pan=true;moved=0;px=ev.clientX;py=ev.clientY;sl=scroll.scrollLeft;st=scroll.scrollTop;
+      scroll.className="dgrm__scroll is-pan";ev.preventDefault();});
+    document.addEventListener("mousemove",function(ev){
+      if(!pan)return;var dx=ev.clientX-px,dy=ev.clientY-py;
+      moved=Math.max(moved,Math.abs(dx)+Math.abs(dy));
+      scroll.scrollLeft=sl-dx;scroll.scrollTop=st-dy;});
+    document.addEventListener("mouseup",function(){
+      if(pan){pan=false;scroll.className="dgrm__scroll";}});
+    document.addEventListener("fullscreenchange",function(){
+      if(document.fullscreenElement===box)setTimeout(fit,60);});
+    /* re-fit when the true width differs from the one fit last used
+       (panel was hidden, window resized, fullscreen toggled) */
+    ZOOM[uid]={fit:fit,apply:apply,
+      refit:function(){var a=avail();
+        if(a.est||a.w<60)return;
+        if(!fitted||Math.abs(a.w-lastFitW)>2)fit();}};
+    window.addEventListener("resize",function(){if(fitted)fit();});
+    fit();
+    return ZOOM[uid];
+  }
+  function refitAll(){for(var k in ZOOM){if(ZOOM[k])ZOOM[k].refit();}}
+
+  /* ================= STEP DETAIL MODAL ================= */
+  function impactCards(pi){
+    var ORD=[["productivity","Productivity"],["cycle_time","Cycle Time"],["cost","Cost"],["risk","Risk"],["experience","Experience"]];
+    var any=false,g="";
+    ORD.forEach(function(o,i){
+      var v=pi?pi[o[0]]:null;if(!v)return;any=true;
+      var rt=(typeof v==="object"?v.qualitative_rating:v)||"—",
+          ds=(typeof v==="object"?v.description:"")||"",
+          r=String(rt).toLowerCase(),
+          c=r.indexOf("high")>-1?"smod__ip--high":r.indexOf("med")>-1?"smod__ip--med":"smod__ip--low";
+      g+='<div class="smod__ic"><div class="smod__il">'+e(o[1])+'</div>'+
+         '<span class="smod__ip '+c+'">'+e(rt)+'</span>'+
+         (ds?'<button type="button" class="smod__why" data-w="'+i+'">&#9662; why</button><div class="smod__wtx" id="wtx'+i+'">'+e(ds)+'</div>':'')+
+         '</div>';});
+    return any?'<div class="smod__sec">Impact of AI on this step</div><div class="smod__impact"><div class="smod__grid">'+g+'</div></div>':"";
+  }
+  function openStep(row){
+    if(!row)return;
+    var ms=visibleMappings(row).filter(function(m){return m&&m.name&&m.name!=="—";});
+    var h='<div class="smod" id="smod"><div class="smod__box">'+
+      '<div class="smod__hd"><div class="smod__ttl">'+e(row.business_process_step||"Step")+
+        (row.role?' &mdash; '+e(row.role):'')+'</div>'+
+        '<button type="button" class="smod__x" id="smodX">&#10005;</button></div><div class="smod__bd">';
+    if(row.to_be)h+='<div class="smod__sec">Reimagined (To-Be)</div><div class="smod__det" style="margin:0 0 10px;border-radius:9px;border-top:1px solid #ecdcff">'+e(row.to_be)+'</div>';
+    h+='<div class="smod__sec">Enablers ('+ms.length+')</div>';
+    if(!ms.length)h+='<div class="smod__none">No enabler mapped to this step &mdash; whitespace / custom build opportunity.</div>';
+    ms.forEach(function(m,i){
+      var col=BAR[m.category]||"#7C00D4";
+      h+='<div class="smod__card" data-a="'+i+'"><div class="smod__av" style="background:'+col+'">'+
+         e(String(m.name||"?").charAt(0).toUpperCase())+'</div><div><div class="smod__nm">'+e(m.name)+'</div>'+
+         '<div class="smod__meta">'+e(m.product||m.category||"")+(m.type?' &middot; '+e(m.type):'')+'</div></div>'+
+         '<span class="smod__chev">&#8250;</span></div>';
+      var det="";
+      if(m.category)det+='<div><b>Category:</b> '+e(m.category)+'</div>';
+      det+='<div><b>Why here:</b> '+e(rationaleFor(row,m))+'</div>';
+      if(m.challenge)det+='<div><b>Challenge:</b> '+e(m.challenge)+'</div>';
+      if(m.value)det+='<div><b>Value:</b> '+e(m.value)+'</div>';
+      if((m.benefits||[]).length)det+='<ul class="rpf-ul">'+m.benefits.map(function(b){return "<li>"+e(b)+"</li>";}).join("")+'</ul>';
+      if((m.kpis||[]).length)det+='<div class="rpf-kv">'+m.kpis.map(function(k){return '<span class="badge">'+e(k.name)+'</span>';}).join(" ")+'</div>';
+      if(m.source_ref)det+='<div class="rpf-src">'+e(m.source_ref)+'</div>';
+      if(m.link)det+='<div style="margin-top:5px"><a class="rpf-link" href="'+e(m.link)+'" target="_blank" rel="noreferrer">&#8599; Open Source</a></div>';
+      h+='<div class="smod__det" id="adet'+i+'" style="display:none">'+(det||"No further detail.")+'</div>';});
+    h+=impactCards(row.process_impact)+'</div></div></div>';
+    var w=document.createElement("div");w.innerHTML=h;document.body.appendChild(w.firstChild);
+    var md=document.getElementById("smod");
+    function close(){if(md&&md.parentNode)md.parentNode.removeChild(md);}
+    document.getElementById("smodX").onclick=close;
+    md.onclick=function(ev){if(ev.target===md)close();};
+    [].forEach.call(md.querySelectorAll("[data-a]"),function(c){
+      c.onclick=function(){var dd=document.getElementById("adet"+c.getAttribute("data-a"));
+        if(dd)dd.style.display=(dd.style.display==="none"?"block":"none");};});
+    [].forEach.call(md.querySelectorAll("[data-w]"),function(b){
+      b.onclick=function(){var t=document.getElementById("wtx"+b.getAttribute("data-w"));
+        if(t)t.className="smod__wtx"+(t.className.indexOf("on")>-1?"":" on");};});
+  }
+
+  /* -------- flatten mappings -------- */
+  function flat(tbl){var o=[];(tbl||[]).forEach(function(r){
+    var vm=visibleMappings(r),ms=vm.length?vm:[{category:"Whitespace",name:"—",type:"Whitespace",rationale:"No CGS Scenario, Accenture Gen AI use case, BPA Bot or SAP Business AI feature available for this step."}];
+    ms.forEach(function(m){o.push({step_no:r.step_no,step:r.business_process_step,role:r.role,gws:r.gateway_next_step,m:m});});});return o;}
+  var ROWS=flat(AD.business_process_table);
+
+  /* -------- header / tabs -------- */
+  document.getElementById("hdrTitle").textContent=(M.process_id?M.process_id+" ":"")+(M.process_name||"Process Report");
+  document.getElementById("hdrMeta").innerHTML=[["L1",M.l1],["L2",M.l2],["L3",M.l3],["Industry",M.industry],["Function",M.function],["Generated",M.generated_on]]
+    .filter(function(x){return x[1];}).map(function(x){return '<span class="rpf-hdr__pill">'+e(x[0])+": "+e(x[1])+"</span>";}).join("");
+  document.getElementById("foot").textContent="Generated from S1 CGS Scenarios · S2 Accenture Gen AI Use Cases · S3 BPA Bots · S4 SAP Business AI";
+  var TABS=[["p-current","Current Process Overview"],["p-discovery","Solutions Discovery across Process Flow"],["p-reimagine","Reimagined Process Flow"],["p-summary","Overall Summary"]];
+  var tb=document.getElementById("tabs");
+  TABS.forEach(function(t,i){var b=document.createElement("button");
+    b.className="rpf-tab"+(i===0?" rpf-tab--active":"");b.textContent=t[1];
+    b.onclick=function(){[].forEach.call(tb.children,function(c){c.className="rpf-tab";});b.className="rpf-tab rpf-tab--active";
+      TABS.forEach(function(x){document.getElementById(x[0]).className="rpf-panel";});
+      document.getElementById(t[0]).className="rpf-panel rpf-panel--active";
+      /* panels bound while hidden measure 0 wide — re-fit on reveal */
+      setTimeout(refitAll,30);};
+    tb.appendChild(b);});
+
+  /* ============ TAB 1 : CURRENT PROCESS OVERVIEW ============ */
+  (function(){
+    var h="";
+    /* --- SAP Business Process Hierarchy path (last node in purple) --- */
+    var rawPath=M.bph_path||[M.l1,M.l2,M.l3,M.process_name].filter(function(x){return x;}).join(" > ");
+    var nodes=String(rawPath||"").split(/\s*(?:>|\u203a|\u00bb|\u2192|->)\s*/)
+                .map(function(x){return String(x||"").trim();}).filter(function(x){return x.length;});
+    var businessContext=(CPO.business_context&&String(CPO.business_context).trim())?String(CPO.business_context):('Based on the SAP Business Process Hierarchy, '+(M.process_name||'this process')+' follows a controlled sequence from process readiness through execution, validation, confirmation, and downstream handoff.');
+    h+='<div class="rpf-card"><div class="rpf-card-title">Business Context</div><div class="rpf-rat" style="max-width:none;font-size:12px;line-height:1.7">'+e(businessContext)+'</div></div>';
+    h+='<div class="rpf-card"><div class="rpf-card-title">SAP Business Process Hierarchy Path'+(M.process_id?' — '+e(M.process_id):'')+'</div>';
+    if(nodes.length){
+      h+='<div class="bph">';
+      nodes.forEach(function(n,i){
+        var last=(i===nodes.length-1);
+        if(i)h+='<span class="bph__arw">&#8250;</span>';
+        h+='<div class="bph__node'+(last?' bph__node--last':'')+'" title="'+e(n)+'">'+
+           '<span class="bph__lvl">L'+(i+1)+(last?' &middot; Current':'')+'</span>'+
+           '<span class="bph__nm">'+e(n)+'</span></div>';});
+      h+='</div>';
+    } else {
+      h+='<div class="rpf-empty">No SAP Business Process Hierarchy path supplied.</div>';}
+    h+='</div>';
+    h+='<div class="rpf-card"><div class="rpf-card-title">Process Flow (As-Is Swimlane)</div><div class="rpf-sub">'+
+       (M.input_mode==="bph"?'Derived from the SAP Business Process Hierarchy: one lane per role, one node per step, gateways for every decision.':'Interpreted from the uploaded swimlane: one lane per role, one node per step, gateways for every decision.')+
+       '</div><div id="swAs"></div></div>';
+    if((CPO.process_summary||[]).length)h+='<div class="rpf-card"><div class="rpf-card-title">Process Summary</div><ol class="rpf-ol">'+CPO.process_summary.map(function(x){return "<li>"+e(x)+"</li>";}).join("")+"</ol></div>";
+    h+='<div class="rpf-card"><div class="rpf-card-title">Current Situation (As-Is)</div>'+
+       '<div class="rpf-tools"><input class="rpf-input" id="qc" placeholder="Search steps…"/><button class="rpf-btn" id="csvc">↧ Download CSV</button></div>'+
+       '<div class="rpf-tblwrap"><table class="rpf-tbl"><thead><tr><th style="width:60px">Task No.</th><th style="min-width:180px">Task Name</th><th style="min-width:130px">Role of Person</th><th style="min-width:230px">Description</th><th style="min-width:360px">Pain Points</th></tr></thead><tbody id="tbc"></tbody></table></div></div>';
+    document.getElementById("p-current").innerHTML=h;
+    document.getElementById("swAs").innerHTML=render(CPO.diagram,{uid:"a",legend:'<span><span class="dgrm__dot" style="background:#0d7a53"></span>Start</span><span><span class="dgrm__dot" style="background:#c2410c"></span>Gateway</span><span><span class="dgrm__dot" style="background:#b3261e"></span>End</span>'});
+    bindZoom("a");
+    var S=CPO.steps||[],q="";
+    function fl(){return S.filter(function(s){return !q||[s.step_no,s.business_process_step,s.role,s.system,s.description].join(" ").toLowerCase().indexOf(q)>-1;});}
+    function dr(){var f=fl(),b=document.getElementById("tbc");
+      b.innerHTML=f.length?f.map(function(s){return "<tr><td class='num'>"+d(s.step_no)+"</td><td><b>"+d(s.business_process_step)+"</b></td><td>"+d(s.role)+"</td><td class='rpf-rat'>"+d(s.description)+"</td><td class='rpf-rat' style='min-width:360px;max-width:none'>"+((s.pain_points||[]).length?(hasQualifiedMapping(s.step_no)?"":"<span class='cat cat--ws'>Whitespace</span>")+"<ul class='rpf-ul'>"+s.pain_points.map(function(p){return "<li>"+e(p)+"</li>";}).join("")+"</ul>":"—")+"</td></tr>";}).join("")
+        :"<tr><td colspan='5' class='rpf-empty'>No process steps available.</td></tr>";}
+    document.getElementById("qc").oninput=function(){q=this.value.toLowerCase();dr();};
+    document.getElementById("csvc").onclick=function(){
+      var r=[["Task No.","Task Name","Role of Person","Description","Pain Points"]];
+      fl().forEach(function(s){r.push([s.step_no,s.business_process_step,s.role,s.description,(s.pain_points||[]).join(" | ")]);});
+      csv(r,"current_process_steps.csv");};
+    dr();
+  })();
+
+  /* ============ TAB 2 : AGENTIC DISCOVERY ============ */
+  (function(){
+    /* repeated non-Whitespace Name = 1 count (case/space-insensitive, per category);
+       every Whitespace mapping is counted once per process step, regardless of placeholder name */
+    var cnt={},seenNm={},uniq=0;CATS.forEach(function(c){cnt[c]=0;});
+    ROWS.forEach(function(r){
+      var nm=String(r.m.name||"").toLowerCase().replace(/\s+/g," ").trim();
+      var key=(r.m.category||"")+"||"+(r.m.category==="Whitespace"?("step#"+r.step_no):((!nm||nm==="\u2014")?("step#"+r.step_no):nm));
+      if(seenNm[key])return;seenNm[key]=1;uniq++;
+      if(cnt[r.m.category]!==undefined)cnt[r.m.category]++;});
+    var steps=(AD.business_process_table||[]).length;
+    var mapped=(AD.business_process_table||[]).filter(function(r){return visibleMappings(r).some(function(m){return m.category!=="Whitespace";});}).length;
+    var h='<div class="rpf-kpis"><div class="rpf-kpi"><div class="rpf-kpi__val">'+steps+'</div><div class="rpf-kpi__lbl">Process Steps</div><div class="rpf-kpi__sub">From hierarchy input</div></div>'+
+      '<div class="rpf-kpi"><div class="rpf-kpi__val">'+mapped+'</div><div class="rpf-kpi__lbl">Steps with Coverage</div><div class="rpf-kpi__sub">'+(steps?Math.round(mapped/steps*100):0)+'% of steps</div></div>';
+    CATS.forEach(function(c){h+='<div class="rpf-kpi" style="border-left-color:'+BAR[c]+'"><div class="rpf-kpi__val" style="color:'+BAR[c]+'">'+cnt[c]+'</div><div class="rpf-kpi__lbl">'+e(catLabel(c))+'</div><div class="rpf-kpi__sub">'+(c==="Whitespace"?"Innovation opportunity":"Mapped items")+'</div></div>';});
+    h+="</div>";
+    if((AD.executive_summary||[]).length)h+='<div class="rpf-card"><div class="rpf-card-title">Executive Summary</div><ul class="rpf-ul">'+AD.executive_summary.map(function(x){return "<li>"+e(x)+"</li>";}).join("")+"</ul></div>";
+    h+='<div class="rpf-card"><div class="rpf-card-title">Business Process Table — Category Mapping</div>'+
+      '<div class="rpf-sub">Every step is evaluated against CGS Solutions (S1), Accenture Gen AI (S2), BPA Bots (S3) and SAP Business AI (S4). Steps with no match are flagged Whitespace. Counters below de-duplicate repeated non-Whitespace names; Whitespace is counted once for each affected process step.</div>'+
+      '<div class="rpf-legend" id="legend"></div><div class="rpf-tools"><input class="rpf-input" id="q" placeholder="Search step, category, solution, product…"/><button class="rpf-btn" id="csvm">↧ Download CSV</button></div>'+
+      '<div class="rpf-tblwrap"><table class="rpf-tbl rpf-tbl--wide"><thead><tr><th style="width:48px">No.</th><th style="min-width:150px">Business Process Step</th><th style="min-width:110px">Role</th><th style="min-width:150px">Category</th><th style="min-width:190px">Solution</th><th style="min-width:300px">Rationale</th><th style="width:70px">Link</th></tr></thead><tbody id="tb"></tbody></table></div></div>';
+    document.getElementById("p-discovery").innerHTML=h;
+    var act=null,q="",lg=document.getElementById("legend");
+    lg.innerHTML='<button class="rpf-fchip rpf-fchip--on" data-c="">All ('+uniq+')</button>'+CATS.map(function(c){return '<button class="rpf-fchip" data-c="'+e(c)+'">'+e(catLabel(c))+" ("+cnt[c]+")</button>";}).join("");
+    [].forEach.call(lg.children,function(b){b.onclick=function(){[].forEach.call(lg.children,function(x){x.className="rpf-fchip";});b.className="rpf-fchip rpf-fchip--on";act=b.getAttribute("data-c")||null;dr();};});
+    document.getElementById("q").oninput=function(){q=this.value.toLowerCase();dr();};
+    function fl(){return ROWS.filter(function(r){if(act&&r.m.category!==act)return false;if(!q)return true;
+      return [r.step,r.role,r.m.category,r.m.name,r.m.type,r.m.product,rationaleFor({business_process_step:r.step,step_no:r.step_no},r.m),r.m.source_ref].join(" ").toLowerCase().indexOf(q)>-1;});}
+    function dr(){var f=fl(),b=document.getElementById("tb");
+      if(!f.length){b.innerHTML="<tr><td colspan='7' class='rpf-empty'>No mappings match the current filter.</td></tr>";return;}
+      b.innerHTML=f.map(function(r){var m=r.m,ws=(m.category==="Whitespace");
+        return "<tr><td class='num'>"+d(r.step_no)+"</td><td><b>"+d(r.step)+"</b></td><td>"+d(r.role)+"</td><td><span class='cat "+(CLS[m.category]||"cat--ws")+"'>"+d(catLabel(m.category))+"</span>"+(ws?"":"<br/><span class='badge' style='margin-top:4px;padding:1px 6px;font-size:8.5px;line-height:1.25;background:#eadcff;border-color:#b978e6;color:#5b008f'>"+d(m.type)+"</span>")+"</td><td><span class='chip"+(ws?" chip--ws":"")+"'>"+d(m.name)+"</span></td><td class='rpf-rat'>"+d(rationaleFor({business_process_step:r.step,step_no:r.step_no},m))+"</td><td>"+(m.link?"<a class='rpf-link' href='"+e(m.link)+"' target='_blank' rel='noreferrer'>↗ Link</a>":"—")+"</td></tr>";}).join("");}
+    document.getElementById("csvm").onclick=function(){
+      var r=[["No.","Business Process Step","Role","Category","Solution","Type","Rationale","Link"]];
+      fl().forEach(function(x){var m=x.m;r.push([x.step_no,x.step,x.role,catLabel(m.category),m.name,m.type,rationaleFor({business_process_step:x.step,step_no:x.step_no},m),m.link]);});
+      csv(r,"agentic_discovery_category_mapping.csv");};
+    dr();
+  })();
+
+  /* ============ TAB 3 : REIMAGINED PROCESS FLOW ============ */
+  (function(){
+    var LEG='<span><span class="dgrm__dot" style="background:#a100ff"></span>CGS Solution</span><span><span class="dgrm__dot" style="background:#1d4ed8"></span>Accenture Gen AI</span><span><span class="dgrm__dot" style="background:#0d7a53"></span>BPA Bots</span><span><span class="dgrm__dot" style="background:#f97316"></span>SAP Business AI</span><span><span class="dgrm__dot" style="background:#e8a800"></span>Whitespace / Custom Build</span><span><span class="dgrm__dot" style="background:#8d8d99"></span>Unmapped / Manual</span><span><span class="dgrm__dot" style="background:#c2410c"></span>Gateway</span><span><span class="dgrm__dot" style="background:#0d7a53"></span>Start</span><span><span class="dgrm__dot" style="background:#b3261e"></span>End</span>';
+    var h='<div class="rpf-card"><div class="rpf-card-title">'+e((M.process_name||"Process"))+' · Reimagined with AI</div>'+
+      '<div class="rpf-tools"><button class="rpf-btn rpf-btn--gh" id="cmp">⇔ Compare Current &amp; Reimagined Flow</button></div>'+
+      '<div id="cmpBox" style="display:none;margin-bottom:12px"><div class="rpf-sub"><b>Current Process Flow · As-Is</b></div><div id="swCmp"></div></div>'+
+      '<div class="rpf-sub"><b>Reimagined Flow · To-Be</b></div><div id="swTo"></div></div>';
+    var t=(RP.business_process_table&&RP.business_process_table.length)?RP.business_process_table:(AD.business_process_table||[]);
+    var draw=JSON.parse(JSON.stringify(RP.diagram||CPO.diagram||{})),els=[];
+    ((draw&&draw.elements)||[]).forEach(function(x){
+      if(x.kind==="task"){var mt=String(x.id||"").match(/(\d+)/),rr=mt?rowForStep(t,+mt[1]):null,vm=visibleMappings(rr).filter(function(m){return m.name&&m.name!=="—";});
+        if(vm.length){x.ai_category=vm[0].category;x.ai_label=String(vm[0].name).slice(0,28);}
+        else{x.ai_category="Whitespace";x.ai_label="Custom build";}}
+      els.push(x);});
+    /* --- Proposed Solutions: hierarchy, task split, and solution-only cards --- */
+    var psRaw=M.bph_path||[M.l1,M.l2,M.l3,M.process_name].filter(function(x){return x;}).join(" > ");
+    var psPath=String(psRaw||"").split(/\s*(?:>|›|»|→|->)\s*/).map(function(x){return String(x||"").trim();}).filter(function(x){return x;});
+    /* v4.2: filter categories (JSON values); display labels come from catLabel() */
+    var PS_CATS=["CGS Scenarios","Accenture Gen AI","BPA Bots","SAP Business AI"];
+    /* single de-duplication key shared by cards, visible total and category counts */
+    function psKey(m){return [m.category,m.name,m.type,m.product].map(function(v){return String(v==null?"":v).trim();}).join("|");}
+    /* qualified = demo-gated, named, canonical non-Whitespace category */
+    function psQualified(r){return visibleMappings(r).filter(function(m){return m&&m.name&&m.name!=="—"&&PS_CATS.indexOf(m.category)>-1;});}
+    var psMap={},psSolutions=[];
+    t.forEach(function(r){
+      psQualified(r).forEach(function(m){
+        var k=psKey(m);
+        if(!psMap[k]){psMap[k]={key:k,mapping:m,tasks:[]};psSolutions.push(psMap[k]);}
+        if(psMap[k].tasks.indexOf(String(r.step_no))<0)psMap[k].tasks.push(String(r.step_no));
+      });
+    });
+    var psCards=psSolutions.map(function(x,i){
+      var m=x.mapping,col=BAR[m.category]||"#a100ff";
+      return '<div class="ps-card" role="listitem" data-ps-i="'+i+'" data-ps-cat="'+e(m.category)+'" data-ps-tasks="'+e(x.tasks.join(','))+'"><div class="ps-solution" style="--ps-color:'+col+'"><div class="ps-solution-name">'+e(m.name)+'</div><div class="ps-solution-meta">'+e(catLabel(m.category))+(m.type?' · '+e(m.type):'')+(m.product&&m.product!=="-"?' · '+e(m.product):'')+'</div></div></div>';
+    }).join("");
+    var psChips='<button type="button" class="rpf-fchip rpf-fchip--on" data-ps-cat="" aria-pressed="true">All<span class="ps-fn" data-ps-n=""></span></button>'+
+      PS_CATS.map(function(c){return '<button type="button" class="rpf-fchip" data-ps-cat="'+e(c)+'" aria-pressed="false">'+e(catLabel(c))+'<span class="ps-fn" data-ps-n="'+e(c)+'"></span></button>';}).join("");
+    var psTasks=t.map(function(r){
+      var n=0,sk={};psQualified(r).forEach(function(m){var k=psKey(m);if(!sk[k]){sk[k]=1;n++;}});
+      return '<div class="ps-node ps-node--task" style="--depth:'+psPath.length+'" data-ps-task="'+e(r.step_no)+'" tabindex="0" role="button" aria-pressed="false" aria-label="Task '+e(r.step_no)+': '+e(r.business_process_step)+', '+n+' proposed solution'+(n===1?'':'s')+'"><button type="button" class="ps-toggle" tabindex="-1"></button><div class="ps-body"><span class="ps-level">TASK</span><span class="ps-name" title="'+e(r.business_process_step)+'">'+e(r.business_process_step)+'</span><span class="ps-count">'+n+'</span></div></div>';
+    }).join("");
+    var psTree=psTasks;
+    for(var psi=psPath.length-1;psi>=0;psi--){
+      var last=psi===psPath.length-1,open=!last;
+      psTree='<div class="ps-node'+(open?' is-open':'')+'" style="--depth:'+psi+'" data-ps-level="'+psi+'" data-ps-last="'+(last?'1':'0')+'"><button type="button" class="ps-toggle" aria-expanded="'+(open?'true':'false')+'" aria-label="L'+(psi+1)+': '+e(psPath[psi])+(last?' - show task split and all tasks':'')+'"></button><div class="ps-body"><span class="ps-level">L'+(psi+1)+'</span><span class="ps-name" title="'+e(psPath[psi])+'">'+e(psPath[psi])+'</span><span class="ps-count">'+t.length+'</span></div></div><div class="ps-children'+(open?' is-open':'')+'">'+psTree+'</div>';
+    }
+    h+='<div class="rpf-card"><div class="rpf-card-title">Proposed Solutions</div><div class="rpf-sub">Click the final hierarchy level to reveal the task split and show all proposed solutions. Select a task to filter the solutions mapped to that task. Use the category filter to narrow the cards; it combines with the selected hierarchy level or task.</div><div class="ps-map"><aside class="ps-tree" id="psTree" aria-label="Process hierarchy and task split">'+psTree+'</aside><section class="ps-right" aria-label="Proposed solutions"><div class="ps-filter" id="psCats" role="group" aria-label="Filter proposed solutions by category">'+psChips+'</div><div class="ps-head"><div class="ps-heading" id="psHeading">Proposed Solutions</div><div class="ps-headr"><div class="ps-total" id="psTotal" aria-live="polite" aria-atomic="true"></div><button type="button" class="rpf-btn rpf-btn--gh ps-reset" id="psReset">Show all solutions</button></div></div><div class="ps-grid" id="psGrid" role="list">'+psCards+'</div><div class="rpf-empty ps-empty" id="psEmpty" role="status" hidden></div></section></div></div>';
+
+    h+='<div class="rpf-card"><div class="rpf-card-title">Reimagined Business Process Elements</div>'+
+       '<div class="rpf-tools"><input class="rpf-input" id="qe" placeholder="Search elements…"/><button class="rpf-btn" id="csve">↧ Download CSV</button></div>'+
+       '<div class="rpf-tblwrap"><table class="rpf-tbl"><thead><tr><th style="min-width:200px">Element</th><th style="width:140px">Element Type</th><th style="min-width:130px">Role</th><th style="min-width:130px">Category</th></tr></thead><tbody id="tbe"></tbody></table></div></div>';
+    h+='<div class="rpf-card"><div class="rpf-card-title">Step-by-Step Reimagination</div>';
+    t.forEach(function(r){
+      h+='<div class="rpf-step"><div class="rpf-step__hd"><div class="rpf-step__no">'+d(r.step_no)+'</div><div class="rpf-step__nm">'+d(r.business_process_step)+'</div><span class="badge">'+d(r.role)+'</span></div>';
+      if(r.to_be)h+='<div class="rpf-kv"><b>To-Be:</b> '+e(r.to_be)+"</div>";
+      visibleMappings(r).forEach(function(m){
+        h+='<div style="border-top:1px solid #f0f0f4;padding-top:8px;margin-top:8px"><span class="cat '+(CLS[m.category]||"cat--ws")+'">'+d(m.category)+'</span> <span class="chip'+(m.category==="Whitespace"?" chip--ws":"")+'">'+d(m.name)+"</span>";
+        if(m.challenge)h+='<div class="rpf-kv"><b>Challenge:</b> '+e(m.challenge)+"</div>";
+        if(m.value)h+='<div class="rpf-kv"><b>Value:</b> '+e(m.value)+"</div>";
+        if((m.benefits||[]).length)h+='<ul class="rpf-ul">'+m.benefits.map(function(x){return "<li>"+e(x)+"</li>";}).join("")+"</ul>";
+        if((m.kpis||[]).length)h+='<div class="rpf-kv">'+m.kpis.map(function(k){return '<span class="badge">'+e(k.name)+(k.source?" ("+e(k.source)+")":"")+"</span>";}).join(" ")+"</div>";
+        h+="</div>";});
+      if(r.process_impact)h+='<div class="rpf-kv">'+Object.keys(r.process_impact).map(function(k){var o=r.process_impact[k];return '<span class="badge">'+e(k)+": "+e((o&&o.qualitative_rating)||o)+"</span>";}).join(" ")+"</div>";
+      h+="</div>";});
+    document.getElementById("p-reimagine").innerHTML=h+"</div>";
+    /* Proposed Solutions hierarchy interactions */
+    var psTreeEl=document.getElementById("psTree"),psGridEl=document.getElementById("psGrid"),psHeadingEl=document.getElementById("psHeading");
+    var psCatsEl=document.getElementById("psCats"),psTotalEl=document.getElementById("psTotal"),psEmptyEl=document.getElementById("psEmpty");
+    /* v4.2 filter state: tree scope (task) and category are independent dimensions */
+    var psTask=null,psCat="";
+    function psInScope(x){return !psTask||x.tasks.indexOf(String(psTask))>-1;}
+    function psRender(){
+      var cnt={},all=0,vis=0;PS_CATS.forEach(function(c){cnt[c]=0;});
+      /* counts and visibility share one de-duplicated set (psSolutions, key = category|name|type|product) */
+      psSolutions.forEach(function(x,i){
+        var inScope=psInScope(x),show=inScope&&(!psCat||x.mapping.category===psCat);
+        if(inScope){all++;cnt[x.mapping.category]++;}
+        if(show)vis++;
+        var c=psGridEl.querySelector('[data-ps-i="'+i+'"]');if(c)c.classList.toggle("is-hidden",!show);});
+      [].forEach.call(psCatsEl.querySelectorAll("[data-ps-cat]"),function(b){
+        var c=b.getAttribute("data-ps-cat")||"",on=(c===psCat),n=c?cnt[c]:all;
+        b.className="rpf-fchip"+(on?" rpf-fchip--on":"");b.setAttribute("aria-pressed",on?"true":"false");
+        var sp=b.querySelector("[data-ps-n]");if(sp)sp.textContent=" ("+n+")";});
+      [].forEach.call(psTreeEl.querySelectorAll("[data-ps-task]"),function(n){var on=!!psTask&&n.getAttribute("data-ps-task")===String(psTask);
+        n.classList.toggle("is-selected",on);n.setAttribute("aria-pressed",on?"true":"false");});
+      var r=psTask?rowForStep(t,psTask):null;
+      psHeadingEl.textContent=(r?("Task "+r.step_no+" · "):"")+"Proposed Solutions"+(psCat?" · "+catLabel(psCat):"");
+      psTotalEl.textContent=vis+(vis===1?" solution":" solutions");
+      psGridEl.hidden=!vis;psEmptyEl.hidden=!!vis;
+      if(!vis)psEmptyEl.textContent=(psTask&&!all)?"No qualified proposed solutions are mapped to this task.":
+        psCat?("No "+catLabel(psCat)+" solutions match the current selection."):"No qualified proposed solutions are available for this process.";
+    }
+    if(psCatsEl)psCatsEl.onclick=function(ev){
+      var b=ev.target.closest("[data-ps-cat]");if(!b)return;
+      psCat=b.getAttribute("data-ps-cat")||"";psRender();};      /* category only: task scope untouched */
+    if(psTreeEl)psTreeEl.onclick=function(ev){
+      var taskNode=ev.target.closest("[data-ps-task]");if(taskNode){psTask=taskNode.getAttribute("data-ps-task");psRender();return;}
+      var levelNode=ev.target.closest("[data-ps-level]");if(levelNode&&levelNode.nextElementSibling){levelNode.classList.toggle("is-open");levelNode.nextElementSibling.classList.toggle("is-open");
+        var tg=levelNode.querySelector(".ps-toggle");if(tg)tg.setAttribute("aria-expanded",levelNode.classList.contains("is-open")?"true":"false");
+        if(levelNode.getAttribute("data-ps-last")==="1"){psTask=null;psRender();}}   /* scope only: category untouched */
+    };
+    if(psTreeEl)psTreeEl.addEventListener("keydown",function(ev){
+      if(ev.key!=="Enter"&&ev.key!==" "&&ev.key!=="Spacebar")return;
+      var n=ev.target;if(!n||!n.hasAttribute||!n.hasAttribute("data-ps-task"))return;
+      ev.preventDefault();psTreeEl.onclick({target:n});});
+    document.getElementById("psReset").onclick=function(){psTask=null;psCat="";psRender();};   /* clears both */
+    psRender();
+
+    document.getElementById("swTo").innerHTML=render(draw,{uid:"b",legend:LEG,click:true});
+    bindZoom("b");
+    /* --- step lookup: by element id, step_no, then label --- */
+    var byStep={};
+    t.forEach(function(r){
+      if(r.step_no!=null)byStep["#"+r.step_no]=r;
+      if(r.business_process_step)byStep[String(r.business_process_step).toLowerCase().replace(/\s+/g," ").trim()]=r;});
+    function lookup(el){
+      if(!el)return null;
+      var k=String(el.label||"").toLowerCase().replace(/\s+/g," ").trim();
+      if(byStep[k])return byStep[k];
+      var m=String(el.id||"").match(/(\d+)/);
+      if(m&&byStep["#"+ +m[1]])return byStep["#"+ +m[1]];
+      return {business_process_step:el.label,role:el.role||el.lane_id,
+              mappings:el.ai_category&&el.ai_category!=="Whitespace"?[{category:el.ai_category,name:el.ai_label||el.ai_category}]:[]};}
+    var dgB=document.getElementById("dg_b");
+    if(dgB)dgB.addEventListener("click",function(ev){
+      var g=ev.target.closest?ev.target.closest(".sw-node"):null;if(!g)return;
+      var id=g.getAttribute("data-node"),els2=(draw.elements||[]);
+      var el=null;els2.forEach(function(x){if(x.id===id)el=x;});
+      openStep(lookup(el));});
+    document.getElementById("cmp").onclick=function(){
+      var c=document.getElementById("cmpBox"),on=(c.style.display==="none");
+      c.style.display=on?"block":"none";
+      if(on&&!c.getAttribute("data-r")){document.getElementById("swCmp").innerHTML=render(CPO.diagram,{uid:"c"});bindZoom("c");c.setAttribute("data-r","1");}};
+    var qe="";
+    function fe(){return els.filter(function(x){return !qe||[x.label,x.kind,x.lane_id,x.ai_category,x.ai_label].join(" ").toLowerCase().indexOf(qe)>-1;});}
+    function KIND(k){return k==="gateway"?"Gateway":k==="event-start"?"Start Event":k==="event-end"?"End Event":"Task";}
+    function de(){var f=fe(),b=document.getElementById("tbe");
+      b.innerHTML=f.length?f.map(function(x){return "<tr><td><b>"+d(x.label)+"</b></td><td><span class='badge'>"+KIND(x.kind)+"</span></td><td>"+d(x.role||x.lane_id)+"</td><td>"+(x.ai_category?"<span class='cat "+(CLS[x.ai_category]||"cat--ws")+"'>"+e(catLabel(x.ai_category))+"</span>":"—")+"</td></tr>";}).join("")
+        :"<tr><td colspan='4' class='rpf-empty'>No reimagined elements available.</td></tr>";}
+    document.getElementById("qe").oninput=function(){qe=this.value.toLowerCase();de();};
+    document.getElementById("csve").onclick=function(){
+      var r=[["Element","Element Type","Role","Category"]];
+      fe().forEach(function(x){r.push([x.label,KIND(x.kind),x.role||x.lane_id,catLabel(x.ai_category)]);});
+      csv(r,"reimagine_business_process.csv");};
+    de();
+  })();
+
+  /* ============ TAB 4 : OVERALL SUMMARY ============ */
+  (function(){
+    var h="",sp=OS.category_split||{},k=Object.keys(sp);
+    if(OS.headline)h+='<div class="rpf-card"><div class="rpf-card-title">Executive Headline</div><div>'+e(OS.headline)+"</div></div>";
+    if(k.length){h+='<div class="rpf-card"><div class="rpf-card-title">Coverage Split by Category</div><div class="rpf-bar">';
+      k.forEach(function(x){h+='<i style="width:'+(sp[x]||0)+'%;background:'+(BAR[x]||"#ccc")+'"></i>';});
+      h+='</div><div class="rpf-kv">'+k.map(function(x){return '<span class="badge">'+e(catLabel(x))+": "+e(sp[x])+"%</span>";}).join(" ")+"</div></div>";}
+    h+='<div class="rpf-grid2">';
+    if((OS.value_potential||[]).length)h+='<div class="rpf-card"><div class="rpf-card-title">Value Potential</div><div class="rpf-tblwrap"><table class="rpf-tbl"><thead><tr><th>Dimension</th><th>Rating</th><th>Description</th></tr></thead><tbody>'+OS.value_potential.map(function(v){return "<tr><td><b>"+d(v.value_dimension)+"</b></td><td><span class='badge'>"+d(v.qualitative_rating)+"</span></td><td class='rpf-rat'>"+d(v.description)+"</td></tr>";}).join("")+"</tbody></table></div></div>";
+    if((OS.kpis_benchmarks||[]).length)h+='<div class="rpf-card"><div class="rpf-card-title">KPIs</div><div class="rpf-tblwrap"><table class="rpf-tbl"><thead><tr><th>KPI</th></tr></thead><tbody>'+OS.kpis_benchmarks.map(function(x){return "<tr><td>"+d(x.kpi)+"</td></tr>";}).join("")+"</tbody></table></div></div>";
+    h+="</div>";
+    if((OS.personas_impacted||[]).length)h+='<div class="rpf-card"><div class="rpf-card-title">Personas Impacted</div><div class="rpf-kv">'+OS.personas_impacted.map(function(p){return '<span class="chip">'+e(p)+"</span>";}).join(" ")+"</div></div>";
+    if((OS.whitespace_opportunities||[]).length)h+='<div class="rpf-card"><div class="rpf-card-title">Whitespace / Innovation Opportunities</div><ul class="rpf-ul">'+OS.whitespace_opportunities.map(function(x){return "<li>"+e(x)+"</li>";}).join("")+"</ul></div>";
+    if((OS.recommendations||[]).length)h+='<div class="rpf-card"><div class="rpf-card-title">Recommended Next Steps</div><ul class="rpf-ul">'+OS.recommendations.map(function(x){return "<li>"+e(x)+"</li>";}).join("")+"</ul></div>";
+    document.getElementById("p-summary").innerHTML=h||'<div class="rpf-card rpf-empty">No summary data.</div>';
+  })();
+})();
+</script>
+<style>
+.emod{position:fixed;inset:0;background:#1c1c1cb3;display:flex;align-items:center;justify-content:center;z-index:10020;padding:16px}.emod__box{background:#fff;border-radius:12px;width:100%;max-width:620px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 55px #0000004d}.emod__hd{background:linear-gradient(100deg,#7C00D4,#a100ff);color:#fff;padding:14px 16px;display:flex;gap:11px;align-items:flex-start}.emod__logo{width:40px;height:40px;border-radius:9px;background:#ffffff2e;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px}.emod__ttl{font-size:15px;font-weight:750;line-height:1.35;flex:1;padding-top:2px}.emod__x{background:none;border:0;color:#fff;font-size:21px;cursor:pointer}.emod__tabs{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid #e7e7ee;background:#fbfbfd}.emod__tab{border:0;background:none;padding:12px 8px;font:inherit;color:#77777f;cursor:pointer;border-bottom:2px solid transparent}.emod__tab.on{color:#7500c0;border-bottom-color:#a100ff;font-weight:700}.emod__body{overflow:auto;padding:16px}.emod__panel{display:none}.emod__panel.on{display:block}.emod__label{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#9999a2;margin:2px 0 7px}.emod__chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}.emod__chip{background:#f4edff;border-radius:8px;padding:8px 10px;min-width:105px}.emod__chip small{display:block;color:#9a9aa4;font-size:8.5px;font-weight:800;text-transform:uppercase}.emod__chip b{display:block;color:#6500a8;font-size:11px;margin-top:3px}.emod__text{color:#55555f;line-height:1.6;margin:0 0 15px}.emod__callout{background:#f5ebff;border-left:4px solid #a100ff;border-radius:0 8px 8px 0;padding:11px 12px;color:#6500a8;margin-bottom:15px}.emod__persona{background:#f0e4ff;border-radius:9px;padding:14px;display:flex;gap:12px;align-items:flex-start;margin-bottom:15px}.emod__person{width:40px;height:40px;border-radius:50%;background:#7C00D4;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex:0 0 40px}.emod__list{margin:6px 0 16px;padding-left:17px;color:#55555f;line-height:1.8}.emod__list li::marker{color:#a100ff}.emod__kpi{width:100%;border-collapse:collapse;font-size:11.5px}.emod__kpi th{background:#8b00df;color:#fff;text-align:left;padding:9px 10px}.emod__kpi td{padding:10px;border-bottom:1px solid #ececf1;vertical-align:top}.emod__kpi td:first-child{color:#6500a8;font-weight:700}.emod__btn{display:inline-block;background:#8b00df;color:#fff;border-radius:20px;padding:9px 16px;font-weight:700;font-size:11px}.emod__muted{color:#9999a4;font-size:11px;padding:14px 0}@media(max-width:560px){.emod{padding:0}.emod__box{max-height:100vh;height:100%;border-radius:0}.emod__body{padding:13px}.emod__chip{min-width:calc(50% - 5px)}}
+</style>
+<script>
+(function(){
+ function esc(x){return x==null?'':String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+ function show(row,m){if(!row||!m)return;var pi=row.process_impact||{}, role=row.role||'Process role', init=role.split(/\s+/).map(function(x){return x[0]||''}).join('').slice(0,2).toUpperCase();
+  function impact(k){var v=pi[k];return v?(typeof v==='object'?(v.qualitative_rating||'—'):v):'—'} function why(k){var v=pi[k];return v&&typeof v==='object'?(v.description||'Qualitative process impact'):'Qualitative process impact'}
+  var cat=m.category==='CGS Scenarios'?'CGS Solution':m.category, status=((m.type||'').match(/Generally Available|Beta|Planned|Demo/i)||['Mapped'])[0];
+  var product='<div class="emod__label">Details</div><div class="emod__chips"><div class="emod__chip"><small>Category</small><b>'+esc(cat||'—')+'</b></div><div class="emod__chip"><small>Type</small><b>'+esc(m.type||'—')+'</b></div><div class="emod__chip"><small>Product</small><b>'+esc(m.product||'—')+'</b></div><div class="emod__chip"><small>Status</small><b>'+esc(status)+'</b></div></div><div class="emod__label">Description</div><p class="emod__text">'+esc((window.__rationaleFor?window.__rationaleFor(row,m):(m.rationale||'Task-specific rationale missing.')))+'</p><div class="emod__label">Business challenge</div><p class="emod__text">'+esc(m.challenge&&m.challenge!=='-'?m.challenge:'The step requires focused guidance, automation, or exception support.')+'</p><div class="emod__label">Value potential</div><div class="emod__callout">'+esc(m.value&&m.value!=='-'?m.value:(row.to_be||'Improves execution through guided automation and exception focus.'))+'</div>'+((m.benefits||[]).length?'<div class="emod__label">Key benefits</div><ul class="emod__list">'+m.benefits.map(function(x){return'<li>'+esc(x)+'</li>'}).join('')+'</ul>':'')+(m.link?'<a class="emod__btn" href="'+esc(m.link)+'" target="_blank" rel="noreferrer">↗ Open Source</a>':'');
+  var items=[(window.__rationaleFor?window.__rationaleFor(row,m):m.rationale)].concat(m.benefits||[]).concat(row.to_be||[]).filter(Boolean).slice(0,5);var persona='<div class="emod__label">Persona</div><div class="emod__persona"><div class="emod__person">'+esc(init||'P')+'</div><div><b>'+esc(role)+'</b><div class="emod__text" style="margin:4px 0 0">Uses '+esc(m.name)+' while completing '+esc(row.business_process_step)+'.</div></div></div><div class="emod__label">Responsibilities with this enabler</div><ul class="emod__list">'+(items.length?items.map(function(x){return'<li>'+esc(x)+'</li>'}).join(''):'<li>Review AI-supported output and manage business exceptions.</li>')+'</ul>'+(m.link?'<a class="emod__btn" href="'+esc(m.link)+'" target="_blank" rel="noreferrer">↗ Open Source</a>':'');
+  var rows='';if((m.kpis||[]).length){m.kpis.forEach(function(k){if(k&&k.name)rows+='<tr><td>'+esc(k.name)+'</td></tr>'})}var kpis='<div class="emod__label">Source-provided KPIs</div><p class="emod__text">KPI outcomes mapped for <b>'+esc(row.business_process_step)+'</b>.</p>'+(rows?'<table class="emod__kpi"><thead><tr><th>KPI</th></tr></thead><tbody>'+rows+'</tbody></table>':'<div class="emod__muted">No source-provided KPIs are available for this enabler.</div>');
+  var html='<div class="emod" id="emod"><div class="emod__box"><div class="emod__hd"><div class="emod__logo">'+esc((m.name||'A')[0])+'</div><div class="emod__ttl">'+esc(m.name||'Enabler')+'</div><button class="emod__x" id="emodX">×</button></div><div class="emod__tabs"><button class="emod__tab on" data-et="p">⚙ Product</button><button class="emod__tab" data-et="r">♟ Persona</button><button class="emod__tab" data-et="k">▥ Process KPIs</button></div><div class="emod__body"><div class="emod__panel on" data-ep="p">'+product+'</div><div class="emod__panel" data-ep="r">'+persona+'</div><div class="emod__panel" data-ep="k">'+kpis+'</div></div></div></div>';document.body.insertAdjacentHTML('beforeend',html);var md=document.getElementById('emod');function close(){md.remove()}document.getElementById('emodX').onclick=close;md.onclick=function(e){if(e.target===md)close()};md.querySelectorAll('[data-et]').forEach(function(b){b.onclick=function(){md.querySelectorAll('[data-et]').forEach(function(x){x.className='emod__tab'});md.querySelectorAll('[data-ep]').forEach(function(x){x.className='emod__panel'});b.className='emod__tab on';md.querySelector('[data-ep="'+b.dataset.et+'"]').className='emod__panel on'}})
+ }
+ document.addEventListener('click',function(ev){var card=ev.target.closest&&ev.target.closest('#smod .smod__card[data-a]');if(!card)return;ev.preventDefault();ev.stopImmediatePropagation();var title=(document.querySelector('#smod .smod__ttl')||{}).textContent||'',step=title.split(' — ')[0].trim(),tbl=(window.__REIMAGINE_DATA__.reimagine_process_flow||{}).business_process_table||[];var row=tbl.find(function(r){return r.business_process_step===step});if(row){var maps=(row.mappings||[]).filter(function(m){return m&&m.name&&m.name!=='—'});show(row,maps[+card.dataset.a])}},true);
+})();
+</script>
+</body>
+</html>
